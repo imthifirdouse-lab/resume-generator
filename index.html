@@ -3,338 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Resume Builder + Photo</title>
+    <title>Pro Resume Builder (Autofill Enabled)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; display: flex; justify-content: center; padding: 20px; }
-        .app-container { background: white; width: 100%; max-width: 950px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        h1 { text-align: center; color: #2c3e50; font-size: 28px; margin-bottom: 10px; }
-        p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 40px; }
-        
-        .form-section { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .form-section h3 { color: #34495e; margin-bottom: 15px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
-        
-        label { display: block; font-weight: 600; margin: 10px 0 5px; color: #2c3e50; font-size: 0.9rem; }
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: 0.3s; }
-        input:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.2); }
-        textarea { resize: vertical; font-family: inherit; }
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; overflow: hidden; }
 
-        /* Image Upload Styling */
-        .image-upload-box { border: 2px dashed #bdc3c7; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; transition: 0.3s; background: #f9f9f9; }
-        .image-upload-box:hover { border-color: #3498db; background: #ecf0f1; }
-        #preview-img { max-width: 100px; max-height: 100px; border-radius: 50%; margin-top: 10px; display: none; border: 3px solid #3498db; }
+        /* --- LAYOUT --- */
+        .app-container { display: flex; width: 100%; height: 100%; }
+        
+        /* LEFT: EDITOR */
+        .editor-pane { width: 45%; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        .editor-header { padding: 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .editor-content { flex: 1; overflow-y: auto; padding: 30px; }
+        .editor-footer { padding: 20px; border-top: 1px solid #eee; background: #f9f9f9; display: flex; gap: 10px; }
 
-        .btn-download { background: linear-gradient(135deg, #2980b9, #2c3e50); color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: transform 0.2s; }
-        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4); }
+        /* RIGHT: PREVIEW */
+        .preview-pane { width: 55%; background: #525659; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 40px; }
+        .resume-paper { background: white; width: 210mm; min-height: 297mm; padding: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; flex-direction: row; color: #333; }
 
-        .row { display: flex; gap: 20px; }
-        .col { flex: 1; }
-        @media (max-width: 600px) { .row { flex-direction: column; } }
+        /* --- FORM STYLING --- */
+        h2 { font-size: 18px; color: var(--primary); margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 15px; position: relative; }
+        label { display: block; font-size: 12px; font-weight: 700; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+        
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
+        textarea { resize: vertical; min-height: 80px; }
+        
+        .btn-add { background: #eef2f5; color: var(--primary); border: 1px dashed #bdc3c7; padding: 10px; width: 100%; cursor: pointer; border-radius: 4px; font-weight: 600; margin-top: 10px; }
+        .btn-delete { color: #e74c3c; cursor: pointer; font-size: 12px; text-decoration: underline; margin-top: 5px; display: inline-block; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1; text-align: center; }
+        
+        /* SUGGESTION MODAL */
+        .suggestion-btn { background: #e8f4fd; color: #3498db; border: none; padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; margin-bottom: 5px; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; transition: 0.2s; }
+        .suggestion-btn:hover { background: #3498db; color: white; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .modal-box { background: white; width: 500px; max-height: 80vh; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { font-weight: bold; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .modal-list { overflow-y: auto; flex: 1; }
+        .suggestion-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; color: #444; transition: 0.2s; display: flex; gap: 10px; align-items: flex-start; }
+        .suggestion-item:hover { background: #f0f7ff; color: #3498db; }
+        .suggestion-item i { margin-top: 3px; color: #27ae60; }
+        .modal-close { cursor: pointer; color: #999; }
+
+        /* --- PREVIEW STYLING --- */
+        #preview-sidebar { width: 32%; background: var(--primary); color: white; padding: 20px; }
+        #preview-main { width: 68%; padding: 30px; background: white; }
+        
+        .p-name { font-size: 24px; font-weight: 700; text-transform: uppercase; line-height: 1.2; }
+        .p-title { font-size: 14px; color: var(--accent); font-weight: 600; margin-bottom: 20px; text-transform: uppercase; }
+        .p-section-title { font-size: 12px; font-weight: 700; color: var(--accent); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; margin-top: 20px; letter-spacing: 1px; }
+        
+        .p-side-header { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
+        .p-contact-item { font-size: 10px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; opacity: 0.9; }
+        .p-skill-item { font-size: 10px; background: rgba(255,255,255,0.1); padding: 3px 8px; margin-bottom: 4px; display: inline-block; border-radius: 3px; }
+        
+        .p-job-block { margin-bottom: 15px; }
+        .p-job-title { font-weight: 700; font-size: 13px; color: #2c3e50; }
+        .p-job-company { font-style: italic; color: #7f8c8d; font-size: 11px; margin-bottom: 5px; }
+        .p-job-desc { font-size: 11px; color: #444; line-height: 1.5; white-space: pre-wrap; }
+        .p-initials { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; margin: 0 auto 20px; border: 2px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
 
+<div class="modal-overlay" id="suggestionModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span>✨ Smart Suggestions</span>
+            <span class="modal-close" onclick="closeModal()">✕</span>
+        </div>
+        <div style="font-size:12px; color:#666; margin-bottom:10px;" id="suggestionContext">Showing suggestions for: <b>Software Engineer</b></div>
+        <div class="modal-list" id="suggestionList">
+            </div>
+    </div>
+</div>
+
 <div class="app-container">
-    <h1>🚀 Modern Resume Architect</h1>
-    <p class="subtitle">Upload your photo and edit details below.</p>
-
-    <div class="form-section">
-        <h3>👤 Personal Identity & Photo</h3>
-        <div class="row">
-            <div class="col">
-                <label>Profile Picture</label>
-                <div class="image-upload-box" onclick="document.getElementById('imgInput').click()">
-                    <span>Click to Upload Photo</span>
-                    <input type="file" id="imgInput" accept="image/*" style="display: none" onchange="previewImage()">
-                    <br>
-                    <img id="preview-img" src="" alt="Profile Preview">
-                </div>
-            </div>
-            <div class="col">
-                <label>Full Name</label>
-                <input type="text" id="name" placeholder="Imtheyas F.M">
-                <label>Job Title</label>
-                <input type="text" id="jobTitle" placeholder="Team Lead / Senior Software Engineer">
-            </div>
+    <div class="editor-pane">
+        <div class="editor-header">
+            <span style="font-weight:700; color: var(--primary);"><i class="fas fa-magic"></i> Resume Builder + AI Suggestions</span>
+            <input type="color" id="themeColor" value="#3498db" onchange="updateTheme(this.value)" style="width:50px; padding:2px; height:30px;">
         </div>
-        <div class="row">
-            <div class="col">
-                <label>Phone</label>
-                <input type="text" id="phone" placeholder="+91-8248524660">
-            </div>
-            <div class="col">
-                <label>Email</label>
-                <input type="text" id="email" placeholder="mohamedimtheyas254@gmail.com">
-            </div>
-            <div class="col">
-                <label>Location</label>
-                <input type="text" id="location" placeholder="Coimbatore, India">
-            </div>
-        </div>
-    </div>
-
-    <div class="form-section">
-        <h3>🛠️ Sidebar Content</h3>
-        <div class="row">
-            <div class="col">
-                <label>Technical Arsenal (One per line)</label>
-                <textarea id="skills" rows="8">Languages: Perl, SQL, DMN
-Scripting: Unix Shell
-Tools: Jira, Atlas, Putty
-IDE: VS Code
-VCS: SVN, Perforce (P4V)
-OS: Unix, Linux
-Methodologies: Agile/Scrum</textarea>
-            </div>
-            <div class="col">
-                <label>Education & Certs</label>
-                <textarea id="education" rows="8">B.E. ECE (2019)
-Sri Eshwar College
-GPA: 6.72
-
-CERTIFICATIONS:
-GitHub Copilot: AI Pair Prog.
-NPTEL: Internet of Things</textarea>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-section">
-        <h3>📄 Main Experience</h3>
-        <label>Professional Summary</label>
-        <textarea id="summary" rows="3">Experienced Team Lead and Senior Software Engineer with a focus on guiding technical teams to achieve milestones. Expert in migrating legacy Perl rules to DMN architecture and utilizing advanced problem-solving techniques to drive innovation. Knowledgeable in Agile methodologies ensuring robust scalable solutions.</textarea>
         
-        <label>Experience 1 (Latest)</label>
-        <textarea id="exp1" rows="6">Team Lead / Senior Software Engineer
-GAVS Technologies | 09/2022 - Present
-• Facilitated Scrum framework (Sprint Planning, Backlog Grooming, Reviews) for the team.
-• Empowered team members by delegating responsibilities based on individual strengths.
-• Migrated legacy logic from Perl to DMN (Decision Model Notation) for Athena Healthcare.
-• Collaborated with Product Owners to refine requirements and ensure alignment.
-• Tools Worked: Putty, VS code, Jira, Atlas.</textarea>
+        <div class="editor-content">
+            <h2><i class="fas fa-user-circle"></i> Personal Details</h2>
+            <div class="form-group"><label>Full Name</label><input type="text" id="inputName" placeholder="Imtheyas F.M" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Target Job Title</label><input type="text" id="inputTitle" placeholder="Senior Technical Lead" oninput="updatePreview()"></div>
+            <div class="form-group">
+                <label>Contact Info</label>
+                <input type="text" id="inputPhone" placeholder="Phone" oninput="updatePreview()">
+                <input type="text" id="inputEmail" placeholder="Email" style="margin-top:5px" oninput="updatePreview()">
+                <input type="text" id="inputLocation" placeholder="Location" style="margin-top:5px" oninput="updatePreview()">
+            </div>
 
-        <label>Experience 2</label>
-        <textarea id="exp2" rows="6">Software Engineer
-RR Donnelly | 04/2021 - 09/2022
-• Engineered Perl-based data integration solutions, sourcing new data approaches.
-• Addressed trouble ticket requests in on-call rotation for Production Support.
-• Involved in Unit/Component testing and debugging against system requirements.
-• Tools Worked: Putty, Power Stream, SVN.</textarea>
+            <h2><i class="fas fa-align-left"></i> Profile Summary</h2>
+            <div class="form-group">
+                <textarea id="inputSummary" placeholder="Write a compelling summary..." oninput="updatePreview()">Senior Technical Lead with 4+ years of expertise in Legacy Modernization...</textarea>
+            </div>
 
-        <label>Experience 3</label>
-        <textarea id="exp3" rows="6">Member Technical
-Broadridge Financial Solutions | 05/2019 - 01/2021
-• Refactored existing Perl code to improve performance, security, and readability.
-• Identified and sourced new data approaches for integration.
-• Achieved 'Quarterly Star Award' twice for delivery excellence.
-• Tools Worked: Putty, Perforce (P4V).</textarea>
+            <h2><i class="fas fa-briefcase"></i> Experience</h2>
+            <div id="experience-container"></div>
+            <button class="btn-add" onclick="addExperienceField()">+ Add Position</button>
+
+            <h2><i class="fas fa-tools"></i> Skills</h2>
+            <div class="form-group">
+                <textarea id="inputSkills" rows="5" oninput="updatePreview()">Perl (Modern)&#10;DMN Architecture&#10;Agile / Scrum</textarea>
+            </div>
+
+            <h2><i class="fas fa-graduation-cap"></i> Education</h2>
+            <div class="form-group"><textarea id="inputEducation" rows="3" oninput="updatePreview()">B.E. ECE (2019)&#10;Sri Eshwar College</textarea></div>
+        </div>
+
+        <div class="editor-footer">
+            <button class="btn-primary" onclick="generatePDF()"><i class="fas fa-file-download"></i> Download PDF</button>
+        </div>
     </div>
 
-    <button class="btn-download" onclick="generateModernPDF()">✨ Generate Modern PDF</button>
+    <div class="preview-pane">
+        <div class="resume-paper" id="resumePreview">
+            <div id="preview-sidebar">
+                <div class="p-initials" id="pInitials">IM</div>
+                <div class="p-side-header">CONTACT</div>
+                <div class="p-contact-item"><i class="fas fa-phone"></i> <span id="pPhone"></span></div>
+                <div class="p-contact-item"><i class="fas fa-envelope"></i> <span id="pEmail"></span></div>
+                <div class="p-contact-item"><i class="fas fa-map-marker-alt"></i> <span id="pLocation"></span></div>
+                <br>
+                <div class="p-side-header">SKILLS</div>
+                <div id="pSkills"></div>
+                <br>
+                <div class="p-side-header">EDUCATION</div>
+                <div id="pEducation" style="font-size:10px; line-height:1.4"></div>
+            </div>
+
+            <div id="preview-main">
+                <div class="p-name" id="pName">IMTHEYAS F.M</div>
+                <div class="p-title" id="pTitle">SENIOR TECHNICAL LEAD</div>
+                <div class="p-section-title">PROFESSIONAL SUMMARY</div>
+                <div class="p-job-desc" id="pSummary"></div>
+                <div class="p-section-title">WORK HISTORY</div>
+                <div id="pExperienceList"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    let profileImageBase64 = null;
+    // --- DATABASE OF SUGGESTIONS ---
+    const suggestionsDB = {
+        "lead": [
+            "Orchestrated sprint planning, backlog grooming, and daily stand-ups for a team of X developers.",
+            "Mentored junior engineers, conducting code reviews and enforcing best practices.",
+            "Reduced technical debt by X% through strategic refactoring of legacy codebases.",
+            "Collaborated with Product Owners to translate business requirements into technical specs.",
+            "Spearheaded the migration from Monolithic architecture to Microservices."
+        ],
+        "software": [
+            "Developed scalable backend APIs using [Language], improving system throughput by X%.",
+            "Optimized SQL queries reducing data retrieval latency by X%.",
+            "Implemented CI/CD pipelines using Jenkins/GitLab to automate deployment.",
+            "Resolved critical production bugs under tight SLAs, ensuring 99.9% uptime.",
+            "Wrote comprehensive unit and integration tests achieving X% code coverage."
+        ],
+        "legacy": [
+            "Migrated complex business logic from Legacy Perl scripts to modern Rule Engines (DMN).",
+            "Refactored unmaintained codebase to improve security and readability.",
+            "Decoupled hardcoded logic into configurable parameters, increasing system flexibility.",
+            "Documented legacy workflows to facilitate knowledge transfer and onboarding."
+        ],
+        "data": [
+            "Engineered ETL pipelines to ingest terabytes of data from various sources.",
+            "Automated manual data reporting tasks, saving X hours of operational time weekly.",
+            "Designed data integration workflows ensuring data integrity and consistency."
+        ]
+    };
 
-    function previewImage() {
-        const file = document.getElementById("imgInput").files[0];
-        const reader = new FileReader();
-        reader.onloadend = function() {
-            profileImageBase64 = reader.result;
-            const img = document.getElementById("preview-img");
-            img.src = profileImageBase64;
-            img.style.display = "block";
-        }
-        if (file) {
-            reader.readAsDataURL(file);
-        }
+    let experiences = [
+        { title: "Team Lead", company: "GAVS Technologies", dates: "09/2022 - Present", desc: "Orchestrated migration of legacy business logic from Perl to DMN.\nFacilitated Scrum ceremonies." },
+        { title: "Software Engineer", company: "RR Donnelly", dates: "04/2021 - 09/2022", desc: "Engineered Perl-based data integration solutions.\nResolved critical production issues." }
+    ];
+
+    let activeExpIndex = null;
+
+    window.onload = function() {
+        if(localStorage.getItem('resumeData')) loadData();
+        else renderExperienceInputs();
+        updatePreview();
+    };
+
+    // --- SUGGESTION LOGIC ---
+    function openSuggestions(index) {
+        activeExpIndex = index;
+        const jobTitle = experiences[index].title.toLowerCase();
+        const modal = document.getElementById('suggestionModal');
+        const list = document.getElementById('suggestionList');
+        const contextText = document.getElementById('suggestionContext');
+        
+        list.innerHTML = "";
+        let matches = [];
+
+        // Simple Keyword Matching
+        if(jobTitle.includes('lead') || jobTitle.includes('manager')) matches = [...matches, ...suggestionsDB.lead];
+        if(jobTitle.includes('engineer') || jobTitle.includes('developer')) matches = [...matches, ...suggestionsDB.software];
+        if(jobTitle.includes('legacy') || jobTitle.includes('perl') || jobTitle.includes('migration')) matches = [...matches, ...suggestionsDB.legacy];
+        if(jobTitle.includes('data')) matches = [...matches, ...suggestionsDB.data];
+        
+        // Default fallback if no keywords match
+        if(matches.length === 0) matches = [...suggestionsDB.software, ...suggestionsDB.lead];
+
+        contextText.innerHTML = `Suggestions based on: <b>${experiences[index].title || "General Role"}</b>`;
+
+        matches.forEach(text => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `<i class="fas fa-plus-circle"></i> <span>${text}</span>`;
+            item.onclick = () => addSuggestion(text);
+            list.appendChild(item);
+        });
+
+        modal.style.display = 'flex';
     }
 
-    function generateModernPDF() {
+    function closeModal() {
+        document.getElementById('suggestionModal').style.display = 'none';
+    }
+
+    function addSuggestion(text) {
+        const currentDesc = experiences[activeExpIndex].desc;
+        const separator = currentDesc.length > 0 ? '\n' : '';
+        experiences[activeExpIndex].desc = currentDesc + separator + "• " + text;
+        renderExperienceInputs(); // Re-render to show new text
+        updatePreview();
+        closeModal();
+    }
+
+    // --- CORE LOGIC ---
+    function addExperienceField() {
+        experiences.push({ title: "", company: "", dates: "", desc: "" });
+        renderExperienceInputs();
+        updatePreview();
+    }
+
+    function removeExperience(index) {
+        experiences.splice(index, 1);
+        renderExperienceInputs();
+        updatePreview();
+    }
+
+    function updateExperienceData(index, field, value) {
+        experiences[index][field] = value;
+        updatePreview();
+    }
+
+    function renderExperienceInputs() {
+        const container = document.getElementById('experience-container');
+        container.innerHTML = "";
+        
+        experiences.forEach((exp, index) => {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.style.background = "#f8f9fa";
+            div.style.padding = "15px";
+            div.style.border = "1px solid #eee";
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <label>Position ${index + 1}</label>
+                    <button class="suggestion-btn" onclick="openSuggestions(${index})"><i class="fas fa-magic"></i> Autofill</button>
+                </div>
+                <input type="text" placeholder="Job Title" value="${exp.title}" oninput="updateExperienceData(${index}, 'title', this.value)" style="margin-bottom:5px">
+                <input type="text" placeholder="Company" value="${exp.company}" oninput="updateExperienceData(${index}, 'company', this.value)" style="margin-bottom:5px">
+                <input type="text" placeholder="Dates" value="${exp.dates}" oninput="updateExperienceData(${index}, 'dates', this.value)" style="margin-bottom:5px">
+                <textarea placeholder="Achievements..." oninput="updateExperienceData(${index}, 'desc', this.value)">${exp.desc}</textarea>
+                <span class="btn-delete" onclick="removeExperience(${index})">Remove Position</span>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updatePreview() {
+        const name = document.getElementById('inputName').value || "YOUR NAME";
+        document.getElementById('pName').innerText = name;
+        document.getElementById('pInitials').innerText = name.substring(0,2).toUpperCase();
+        
+        document.getElementById('pTitle').innerText = document.getElementById('inputTitle').value || "ROLE";
+        document.getElementById('pPhone').innerText = document.getElementById('inputPhone').value;
+        document.getElementById('pEmail').innerText = document.getElementById('inputEmail').value;
+        document.getElementById('pLocation').innerText = document.getElementById('inputLocation').value;
+        document.getElementById('pSummary').innerText = document.getElementById('inputSummary').value;
+        document.getElementById('pEducation').innerText = document.getElementById('inputEducation').value;
+
+        const skillsRaw = document.getElementById('inputSkills').value;
+        document.getElementById('pSkills').innerHTML = skillsRaw.split('\n').filter(s=>s).map(s => `<div class="p-skill-item">${s}</div>`).join('');
+
+        document.getElementById('pExperienceList').innerHTML = experiences.map(exp => `
+            <div class="p-job-block">
+                <div class="p-job-title">${exp.title}</div>
+                <div class="p-job-company">${exp.company} | ${exp.dates}</div>
+                <div class="p-job-desc">${exp.desc}</div>
+            </div>
+        `).join('');
+
+        saveData();
+    }
+
+    function updateTheme(color) {
+        document.documentElement.style.setProperty('--accent', color);
+    }
+
+    function saveData() {
+        const data = {
+            name: document.getElementById('inputName').value,
+            title: document.getElementById('inputTitle').value,
+            phone: document.getElementById('inputPhone').value,
+            email: document.getElementById('inputEmail').value,
+            location: document.getElementById('inputLocation').value,
+            summary: document.getElementById('inputSummary').value,
+            skills: document.getElementById('inputSkills').value,
+            education: document.getElementById('inputEducation').value,
+            experiences: experiences
+        };
+        localStorage.setItem('resumeData', JSON.stringify(data));
+    }
+
+    function loadData() {
+        const data = JSON.parse(localStorage.getItem('resumeData'));
+        if(!data) return;
+        document.getElementById('inputName').value = data.name || "";
+        document.getElementById('inputTitle').value = data.title || "";
+        document.getElementById('inputPhone').value = data.phone || "";
+        document.getElementById('inputEmail').value = data.email || "";
+        document.getElementById('inputLocation').value = data.location || "";
+        document.getElementById('inputSummary').value = data.summary || "";
+        document.getElementById('inputSkills').value = data.skills || "";
+        document.getElementById('inputEducation').value = data.education || "";
+        if(data.experiences) experiences = data.experiences;
+        renderExperienceInputs();
+    }
+
+    function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-        // COLORS
-        const SIDEBAR_COLOR = [44, 62, 80]; // Dark Navy
-        const TEXT_LIGHT = [255, 255, 255]; // White
-        const TEXT_DARK = [44, 62, 80]; // Dark Grey
-        const ACCENT_COLOR = [52, 152, 219]; // Light Blue
-
-        // DIMENSIONS
-        const pageHeight = doc.internal.pageSize.height;
-        const pageWidth = doc.internal.pageSize.width;
-        const sidebarWidth = 65; 
-        const margin = 10;
+        const themeColorHex = document.getElementById('themeColor').value;
+        const r = parseInt(themeColorHex.substr(1,2), 16);
+        const g = parseInt(themeColorHex.substr(3,2), 16);
+        const b = parseInt(themeColorHex.substr(5,2), 16);
         
-        // --- DRAW SIDEBAR (LEFT) ---
-        doc.setFillColor(...SIDEBAR_COLOR);
-        doc.rect(0, 0, sidebarWidth, pageHeight, 'F');
-
-        // --- PROFILE PICTURE ---
-        let ySide = 20;
+        // PDF Gen Logic (Same as before)
+        const sidebarColor = [44, 62, 80];
+        doc.setFillColor(...sidebarColor);
+        doc.rect(0, 0, 70, 297, 'F');
         
-        if (profileImageBase64) {
-            // Add Uploaded Image (Square aspect ratio for stability)
-            try {
-                doc.addImage(profileImageBase64, 'JPEG', margin + 5, 20, 35, 35);
-            } catch (e) {
-                // Fallback if format issues
-                console.error("Image error", e);
-            }
-            ySide = 65;
-        } else {
-            // Fallback Circle with Initials
-            doc.setFillColor(200, 200, 200);
-            doc.circle(sidebarWidth/2, 35, 18, 'F');
-            doc.setFontSize(24);
-            doc.setTextColor(255, 255, 255);
-            const nameVal = document.getElementById('name').value || "IM";
-            const initials = nameVal.split(' ').map(n => n[0]).join('').substring(0,2);
-            doc.text(initials, (sidebarWidth/2)-6, 43);
-            ySide = 70;
-        }
+        let y = 30;
+        doc.setFillColor(255,255,255); doc.circle(35, 30, 15, 'S');
+        doc.setFontSize(16); doc.setTextColor(255,255,255);
+        doc.text((document.getElementById('inputName').value||"XX").substring(0,2).toUpperCase(), 31, 32);
 
-        // Helper: Sidebar Section
-        function addSidebarSection(title, contentId) {
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            doc.setTextColor(...ACCENT_COLOR);
-            doc.text(title.toUpperCase(), margin, ySide);
-            ySide += 7;
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.setTextColor(...TEXT_LIGHT);
-            
-            const text = document.getElementById(contentId).value;
-            const splitText = doc.splitTextToSize(text, sidebarWidth - (margin*2));
-            doc.text(splitText, margin, ySide);
-            ySide += (splitText.length * 5) + 10;
-        }
-
-        // Contact Info
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.setTextColor(...ACCENT_COLOR);
-        doc.text("CONTACT", margin, ySide);
-        ySide += 8;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(...TEXT_LIGHT);
+        y = 60;
+        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(r,g,b);
+        doc.text("CONTACT", 10, y); y+=6;
+        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(230,230,230);
+        [document.getElementById('inputPhone').value, document.getElementById('inputEmail').value, document.getElementById('inputLocation').value].forEach(l => { if(l) { doc.text(l, 10, y); y+=6; }});
         
-        const phone = document.getElementById('phone').value;
-        const email = document.getElementById('email').value;
-        const loc = document.getElementById('location').value;
+        y+=10;
+        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(r,g,b); doc.text("SKILLS", 10, y); y+=6;
+        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(230,230,230);
+        document.getElementById('inputSkills').value.split('\n').forEach(s => { if(s) { doc.text("• "+s, 10, y); y+=5; }});
+
+        y=25; const x=80; const w=115;
+        doc.setFontSize(24); doc.setFont("helvetica", "bold"); doc.setTextColor(44,62,80);
+        doc.text(document.getElementById('inputName').value.toUpperCase(), x, y); y+=7;
+        doc.setFontSize(12); doc.setTextColor(r,g,b);
+        doc.text(document.getElementById('inputTitle').value.toUpperCase(), x, y); y+=5;
+        doc.setDrawColor(200,200,200); doc.line(x,y,200,y); y+=10;
+
+        // Content
+        const sections = [
+            { title: "PROFESSIONAL SUMMARY", text: document.getElementById('inputSummary').value },
+            { title: "WORK HISTORY", items: experiences }
+        ];
+
+        doc.setFontSize(10); doc.setTextColor(60,60,60);
+        const sumLines = doc.splitTextToSize(document.getElementById('inputSummary').value, w);
+        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(44,62,80);
+        doc.text("PROFESSIONAL SUMMARY", x, y); y+=5;
+        doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(60,60,60);
+        doc.text(sumLines, x, y); y += (sumLines.length*5)+5;
+
+        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(44,62,80);
+        doc.text("WORK HISTORY", x, y); y+=5;
         
-        doc.text(phone, margin, ySide); ySide += 6;
-        const splitEmail = doc.splitTextToSize(email, sidebarWidth - 15);
-        doc.text(splitEmail, margin, ySide); ySide += (splitEmail.length * 5) + 2;
-        doc.text(loc, margin, ySide); ySide += 15;
+        experiences.forEach(exp => {
+            if(y>270) { doc.addPage(); doc.setFillColor(...sidebarColor); doc.rect(0,0,70,297,'F'); y=20; }
+            doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(0,0,0);
+            doc.text(exp.title, x, y); y+=5;
+            doc.setFontSize(10); doc.setFont("helvetica", "italic"); doc.setTextColor(100,100,100);
+            doc.text(`${exp.company} | ${exp.dates}`, x, y); y+=5;
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(60,60,60);
+            const dLines = doc.splitTextToSize(exp.desc, w);
+            doc.text(dLines, x, y); y+=(dLines.length*5)+6;
+        });
 
-        // Skills & Education
-        addSidebarSection("TECHNICAL SKILLS", "skills");
-        addSidebarSection("EDUCATION", "education");
-
-
-        // --- MAIN CONTENT (RIGHT) ---
-        let yMain = 20;
-        const xMain = sidebarWidth + 15;
-        const mainWidth = pageWidth - sidebarWidth - 25;
-
-        // Header (Name & Title)
-        const name = document.getElementById('name').value || "YOUR NAME";
-        const job = document.getElementById('jobTitle').value || "JOB TITLE";
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(24);
-        doc.setTextColor(...TEXT_DARK);
-        doc.text(name.toUpperCase(), xMain, yMain + 5);
-        
-        doc.setFontSize(12);
-        doc.setTextColor(...ACCENT_COLOR);
-        doc.text(job.toUpperCase(), xMain, yMain + 14);
-        
-        doc.setDrawColor(200, 200, 200);
-        doc.line(xMain, yMain + 20, pageWidth - margin, yMain + 20);
-        
-        yMain += 30;
-
-        // Helper: Main Section
-        function addMainSection(title, content) {
-            if (yMain > 250) { doc.addPage(); yMain = 20; }
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            doc.setTextColor(...TEXT_DARK);
-            doc.text(title.toUpperCase(), xMain, yMain);
-            
-            doc.setDrawColor(...ACCENT_COLOR);
-            doc.setLineWidth(1);
-            doc.line(xMain, yMain + 2, xMain + 30, yMain + 2);
-            
-            yMain += 10;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10.5);
-            doc.setTextColor(60, 60, 60);
-
-            const lines = doc.splitTextToSize(content, mainWidth);
-            doc.text(lines, xMain, yMain);
-            yMain += (lines.length * 6) + 10;
-        }
-
-        // Summary
-        addMainSection("Professional Summary", document.getElementById('summary').value);
-
-        // Experience Loop
-        function addExperience(id) {
-            const raw = document.getElementById(id).value;
-            if(!raw) return;
-            
-            const lines = raw.split('\n');
-            const titleLine = lines[0]; 
-            const companyLine = lines[1]; 
-            const bullets = lines.slice(2).join('\n'); 
-
-            if (yMain > 230) { doc.addPage(); yMain = 20; }
-
-            // Title
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            doc.setTextColor(0, 0, 0);
-            doc.text(titleLine, xMain, yMain);
-            yMain += 5;
-
-            // Company
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
-            doc.text(companyLine, xMain, yMain);
-            yMain += 6;
-
-            // Bullets
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(60, 60, 60);
-            const splitBullets = doc.splitTextToSize(bullets, mainWidth);
-            doc.text(splitBullets, xMain, yMain);
-            yMain += (splitBullets.length * 5) + 8;
-        }
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.setTextColor(...TEXT_DARK);
-        doc.text("WORK HISTORY", xMain, yMain);
-        doc.setDrawColor(...ACCENT_COLOR);
-        doc.line(xMain, yMain + 2, xMain + 30, yMain + 2);
-        yMain += 10;
-
-        addExperience('exp1');
-        addExperience('exp2');
-        addExperience('exp3');
-
-        doc.save("Modern_Resume_With_Photo.pdf");
+        doc.save("Smart_Resume.pdf");
     }
 </script>
-
 </body>
 </html>
