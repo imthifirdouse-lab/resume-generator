@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Resume Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; color: #333; max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        h3 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 0.5rem; margin-top: 1.5rem; }
+        .warning { background: #fff3cd; color: #856404; padding: 1rem; border-radius: 4px; border-left: 5px solid #ffeeba; margin-bottom: 1rem; }
+        label { display: block; font-weight: bold; margin-top: 1rem; margin-bottom: 0.2rem; }
+        input, textarea { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        button { display: block; width: 100%; background: #e74c3c; color: white; padding: 1rem; border: none; border-radius: 4px; font-size: 1.1rem; cursor: pointer; margin-top: 2rem; transition: background 0.3s; }
+        button:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📄 Client-Side Resume Generator</h1>
+    <div class="warning">
+        <strong>🔒 Privacy Mode:</strong> This tool runs 100% in your browser. No data is sent to any server.
+    </div>
+
+    <h3>1. Personal Details (Required)</h3>
+    <label>Full Name</label>
+    <input type="text" id="name" placeholder="e.g. Imtheyas F.M.">
+    
+    <label>Contact Info</label>
+    <input type="text" id="contact" placeholder="City | Phone | Email">
+
+    <h3>2. Professional Summary</h3>
+    <textarea id="summary" rows="4">Technical Team Lead & Backend Engineer with 4+ years of experience specializing in Legacy Modernization and Data Integration. Expert in orchestrating complex migrations from Perl to DMN architectures and leading Agile teams to reduce delivery cycle times.</textarea>
+
+    <h3>3. Experience (Optimized)</h3>
+    
+    <label>Role 1 (Latest)</label>
+    <textarea id="role1" rows="6">Team Lead / Senior Software Engineer | GAVS Technologies | 09/2022 - Present
+- Orchestrated the strategic migration of legacy business logic from Perl to DMN, reducing rule processing latency by ~20%.
+- Spearheaded Agile ceremonies (Sprint Planning, Retrospectives) for a team of 5+ engineers.
+- Collaborated with Product Owners to refine backlog requirements.</textarea>
+
+    <label>Role 2</label>
+    <textarea id="role2" rows="6">Software Engineer | RR Donnelly | 04/2021 - 09/2022
+- Engineered robust data integration scripts in Perl, automating manual workflows to save 10+ hours weekly.
+- Resolved P1/P2 production incidents during on-call rotations, maintaining 99.9% system availability.
+- Optimized legacy codebase achieving a 15% reduction in execution time.</textarea>
+
+    <label>Role 3</label>
+    <textarea id="role3" rows="6">Member Technical | Broadridge Financial Solutions | 05/2019 - 01/2021
+- Refactored critical Perl modules to enhance security protocols and code readability.
+- Identified and integrated new data sources expanding system reporting capabilities.
+- Awarded 'Quarterly Star' twice for excellence in defect-free code delivery.</textarea>
+
+    <button onclick="generatePDF()">⬇️ Download Secure PDF</button>
+</div>
+
+<script>
+    // PDF Generation Logic
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Fetch Inputs
+        const name = document.getElementById('name').value || "YOUR NAME";
+        const contact = document.getElementById('contact').value || "CONTACT INFO";
+        const summary = document.getElementById('summary').value;
+        const role1 = document.getElementById('role1').value;
+        const role2 = document.getElementById('role2').value;
+        const role3 = document.getElementById('role3').value;
+
+        let y = 20; // Vertical cursor position
+
+        // Helper to add text and move cursor
+        function addText(text, size, isBold = false) {
+            doc.setFontSize(size);
+            doc.setFont("helvetica", isBold ? "bold" : "normal");
+            
+            // Text Wrapping
+            const splitText = doc.splitTextToSize(text, 180);
+            doc.text(splitText, 15, y);
+            y += (splitText.length * size * 0.4) + 2; 
+        }
+
+        // Header
+        addText(name, 22, true);
+        addText(contact, 10);
+        doc.setLineWidth(0.5);
+        doc.line(15, y, 195, y);
+        y += 10;
+
+        // Summary
+        addText("PROFESSIONAL SUMMARY", 12, true);
+        y += 2;
+        addText(summary, 10);
+        y += 5;
+
+        // Experience
+        addText("PROFESSIONAL EXPERIENCE", 12, true);
+        y += 2;
+        
+        // Role 1
+        addText(role1, 10);
+        y += 4;
+        
+        // Role 2
+        addText(role2, 10);
+        y += 4;
+
+        // Role 3
+        addText(role3, 10);
+
+        doc.save("Imtheyas_Resume.pdf");
+    }
+</script>
+
+</body>
+</html>
