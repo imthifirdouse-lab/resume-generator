@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Resume Builder</title>
+    <title>Modern Resume Builder + Photo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; display: flex; justify-content: center; padding: 20px; }
-        .app-container { background: white; width: 100%; max-width: 900px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .app-container { background: white; width: 100%; max-width: 950px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
         h1 { text-align: center; color: #2c3e50; font-size: 28px; margin-bottom: 10px; }
         p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 40px; }
@@ -19,6 +19,11 @@
         input, textarea { width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: 0.3s; }
         input:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.2); }
         textarea { resize: vertical; font-family: inherit; }
+
+        /* Image Upload Styling */
+        .image-upload-box { border: 2px dashed #bdc3c7; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; transition: 0.3s; background: #f9f9f9; }
+        .image-upload-box:hover { border-color: #3498db; background: #ecf0f1; }
+        #preview-img { max-width: 100px; max-height: 100px; border-radius: 50%; margin-top: 10px; display: none; border: 3px solid #3498db; }
 
         .btn-download { background: linear-gradient(135deg, #2980b9, #2c3e50); color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: transform 0.2s; }
         .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4); }
@@ -32,18 +37,25 @@
 
 <div class="app-container">
     <h1>🚀 Modern Resume Architect</h1>
-    <p class="subtitle">Enter your details below to generate a professional, split-column resume.</p>
+    <p class="subtitle">Upload your photo and edit details below.</p>
 
     <div class="form-section">
-        <h3>👤 Personal Identity</h3>
+        <h3>👤 Personal Identity & Photo</h3>
         <div class="row">
+            <div class="col">
+                <label>Profile Picture</label>
+                <div class="image-upload-box" onclick="document.getElementById('imgInput').click()">
+                    <span>Click to Upload Photo</span>
+                    <input type="file" id="imgInput" accept="image/*" style="display: none" onchange="previewImage()">
+                    <br>
+                    <img id="preview-img" src="" alt="Profile Preview">
+                </div>
+            </div>
             <div class="col">
                 <label>Full Name</label>
                 <input type="text" id="name" placeholder="Imtheyas F.M">
-            </div>
-            <div class="col">
                 <label>Job Title</label>
-                <input type="text" id="jobTitle" placeholder="Technical Team Lead">
+                <input type="text" id="jobTitle" placeholder="Team Lead / Senior Software Engineer">
             </div>
         </div>
         <div class="row">
@@ -63,25 +75,27 @@
     </div>
 
     <div class="form-section">
-        <h3>🛠️ Sidebar Content (Skills & Edu)</h3>
+        <h3>🛠️ Sidebar Content</h3>
         <div class="row">
             <div class="col">
-                <label>Skills (One per line)</label>
-                <textarea id="skills" rows="5">Perl (Modern)
-DMN Architecture
-SQL / Unix Shell
-Agile / Scrum
-Jira / Atlas
-Legacy Migration
-Team Leadership</textarea>
+                <label>Technical Arsenal (One per line)</label>
+                <textarea id="skills" rows="8">Languages: Perl, SQL, DMN
+Scripting: Unix Shell
+Tools: Jira, Atlas, Putty
+IDE: VS Code
+VCS: SVN, Perforce (P4V)
+OS: Unix, Linux
+Methodologies: Agile/Scrum</textarea>
             </div>
             <div class="col">
                 <label>Education & Certs</label>
-                <textarea id="education" rows="5">B.E. ECE (2019)
+                <textarea id="education" rows="8">B.E. ECE (2019)
 Sri Eshwar College
+GPA: 6.72
 
-GitHub Copilot Cert
-NPTEL IoT Cert</textarea>
+CERTIFICATIONS:
+GitHub Copilot: AI Pair Prog.
+NPTEL: Internet of Things</textarea>
             </div>
         </div>
     </div>
@@ -89,34 +103,54 @@ NPTEL IoT Cert</textarea>
     <div class="form-section">
         <h3>📄 Main Experience</h3>
         <label>Professional Summary</label>
-        <textarea id="summary" rows="3">Results-oriented Technical Team Lead with 4+ years of experience driving legacy modernization. Expert in migrating Perl-based logic to DMN architectures and facilitating Agile ceremonies to improve delivery velocity.</textarea>
+        <textarea id="summary" rows="3">Experienced Team Lead and Senior Software Engineer with a focus on guiding technical teams to achieve milestones. Expert in migrating legacy Perl rules to DMN architecture and utilizing advanced problem-solving techniques to drive innovation. Knowledgeable in Agile methodologies ensuring robust scalable solutions.</textarea>
         
         <label>Experience 1 (Latest)</label>
-        <textarea id="exp1" rows="5">Team Lead / Senior Software Engineer
+        <textarea id="exp1" rows="6">Team Lead / Senior Software Engineer
 GAVS Technologies | 09/2022 - Present
-• Orchestrated migration of legacy business logic from Perl to DMN, reducing latency by 20%.
-• Facilitated Scrum ceremonies (Planning, Reviews) for a team of 5 engineers.
-• Collaborated with Product Owners to refine requirements and ensure alignment.</textarea>
+• Facilitated Scrum framework (Sprint Planning, Backlog Grooming, Reviews) for the team.
+• Empowered team members by delegating responsibilities based on individual strengths.
+• Migrated legacy logic from Perl to DMN (Decision Model Notation) for Athena Healthcare.
+• Collaborated with Product Owners to refine requirements and ensure alignment.
+• Tools Worked: Putty, VS code, Jira, Atlas.</textarea>
 
         <label>Experience 2</label>
-        <textarea id="exp2" rows="5">Software Engineer
+        <textarea id="exp2" rows="6">Software Engineer
 RR Donnelly | 04/2021 - 09/2022
-• Engineered Perl-based data integration solutions to support high-volume environments.
-• Resolved critical production issues via on-call rotation, ensuring 99.9% uptime.
-• Optimized existing scripts reducing data processing time by 15%.</textarea>
+• Engineered Perl-based data integration solutions, sourcing new data approaches.
+• Addressed trouble ticket requests in on-call rotation for Production Support.
+• Involved in Unit/Component testing and debugging against system requirements.
+• Tools Worked: Putty, Power Stream, SVN.</textarea>
 
         <label>Experience 3</label>
-        <textarea id="exp3" rows="5">Member Technical
-Broadridge Financial | 05/2019 - 01/2021
-• Refactored Perl modules to improve application security and readability.
-• Integrated new data sources to enhance system reporting capabilities.
-• Awarded 'Quarterly Star' twice for delivery excellence.</textarea>
+        <textarea id="exp3" rows="6">Member Technical
+Broadridge Financial Solutions | 05/2019 - 01/2021
+• Refactored existing Perl code to improve performance, security, and readability.
+• Identified and sourced new data approaches for integration.
+• Achieved 'Quarterly Star Award' twice for delivery excellence.
+• Tools Worked: Putty, Perforce (P4V).</textarea>
     </div>
 
     <button class="btn-download" onclick="generateModernPDF()">✨ Generate Modern PDF</button>
 </div>
 
 <script>
+    let profileImageBase64 = null;
+
+    function previewImage() {
+        const file = document.getElementById("imgInput").files[0];
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            profileImageBase64 = reader.result;
+            const img = document.getElementById("preview-img");
+            img.src = profileImageBase64;
+            img.style.display = "block";
+        }
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+    }
+
     function generateModernPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -130,27 +164,36 @@ Broadridge Financial | 05/2019 - 01/2021
         // DIMENSIONS
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
-        const sidebarWidth = 65; // Width of left column
+        const sidebarWidth = 65; 
         const margin = 10;
         
         // --- DRAW SIDEBAR (LEFT) ---
         doc.setFillColor(...SIDEBAR_COLOR);
         doc.rect(0, 0, sidebarWidth, pageHeight, 'F');
 
-        // --- SIDEBAR CONTENT ---
+        // --- PROFILE PICTURE ---
         let ySide = 20;
-
-        // Photo Placeholder (Circle)
-        doc.setFillColor(200, 200, 200);
-        doc.circle(sidebarWidth/2, 35, 18, 'F');
-        doc.setFontSize(24);
-        doc.setTextColor(255, 255, 255);
-        // Initials inside circle
-        const nameVal = document.getElementById('name').value || "IM";
-        const initials = nameVal.split(' ').map(n => n[0]).join('').substring(0,2);
-        doc.text(initials, (sidebarWidth/2)-6, 43);
-
-        ySide = 70;
+        
+        if (profileImageBase64) {
+            // Add Uploaded Image (Square aspect ratio for stability)
+            try {
+                doc.addImage(profileImageBase64, 'JPEG', margin + 5, 20, 35, 35);
+            } catch (e) {
+                // Fallback if format issues
+                console.error("Image error", e);
+            }
+            ySide = 65;
+        } else {
+            // Fallback Circle with Initials
+            doc.setFillColor(200, 200, 200);
+            doc.circle(sidebarWidth/2, 35, 18, 'F');
+            doc.setFontSize(24);
+            doc.setTextColor(255, 255, 255);
+            const nameVal = document.getElementById('name').value || "IM";
+            const initials = nameVal.split(' ').map(n => n[0]).join('').substring(0,2);
+            doc.text(initials, (sidebarWidth/2)-6, 43);
+            ySide = 70;
+        }
 
         // Helper: Sidebar Section
         function addSidebarSection(title, contentId) {
@@ -170,7 +213,7 @@ Broadridge Financial | 05/2019 - 01/2021
             ySide += (splitText.length * 5) + 10;
         }
 
-        // Contact Info (Manual Render for icons)
+        // Contact Info
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.setTextColor(...ACCENT_COLOR);
@@ -190,7 +233,7 @@ Broadridge Financial | 05/2019 - 01/2021
         doc.text(loc, margin, ySide); ySide += 15;
 
         // Skills & Education
-        addSidebarSection("SKILLS", "skills");
+        addSidebarSection("TECHNICAL SKILLS", "skills");
         addSidebarSection("EDUCATION", "education");
 
 
@@ -204,11 +247,11 @@ Broadridge Financial | 05/2019 - 01/2021
         const job = document.getElementById('jobTitle').value || "JOB TITLE";
 
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(26);
+        doc.setFontSize(24);
         doc.setTextColor(...TEXT_DARK);
         doc.text(name.toUpperCase(), xMain, yMain + 5);
         
-        doc.setFontSize(14);
+        doc.setFontSize(12);
         doc.setTextColor(...ACCENT_COLOR);
         doc.text(job.toUpperCase(), xMain, yMain + 14);
         
@@ -219,7 +262,6 @@ Broadridge Financial | 05/2019 - 01/2021
 
         // Helper: Main Section
         function addMainSection(title, content) {
-            // Check Page Break
             if (yMain > 250) { doc.addPage(); yMain = 20; }
 
             doc.setFont("helvetica", "bold");
@@ -227,7 +269,6 @@ Broadridge Financial | 05/2019 - 01/2021
             doc.setTextColor(...TEXT_DARK);
             doc.text(title.toUpperCase(), xMain, yMain);
             
-            // Blue underline for headers
             doc.setDrawColor(...ACCENT_COLOR);
             doc.setLineWidth(1);
             doc.line(xMain, yMain + 2, xMain + 30, yMain + 2);
@@ -251,11 +292,11 @@ Broadridge Financial | 05/2019 - 01/2021
             if(!raw) return;
             
             const lines = raw.split('\n');
-            const titleLine = lines[0]; // Title
-            const companyLine = lines[1]; // Company
-            const bullets = lines.slice(2).join('\n'); // Description
+            const titleLine = lines[0]; 
+            const companyLine = lines[1]; 
+            const bullets = lines.slice(2).join('\n'); 
 
-            if (yMain > 240) { doc.addPage(); yMain = 20; }
+            if (yMain > 230) { doc.addPage(); yMain = 20; }
 
             // Title
             doc.setFont("helvetica", "bold");
@@ -264,7 +305,7 @@ Broadridge Financial | 05/2019 - 01/2021
             doc.text(titleLine, xMain, yMain);
             yMain += 5;
 
-            // Company & Date
+            // Company
             doc.setFont("helvetica", "italic");
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
@@ -279,7 +320,6 @@ Broadridge Financial | 05/2019 - 01/2021
             yMain += (splitBullets.length * 5) + 8;
         }
         
-        // Experience Header
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.setTextColor(...TEXT_DARK);
@@ -292,7 +332,7 @@ Broadridge Financial | 05/2019 - 01/2021
         addExperience('exp2');
         addExperience('exp3');
 
-        doc.save("Modern_Resume.pdf");
+        doc.save("Modern_Resume_With_Photo.pdf");
     }
 </script>
 
