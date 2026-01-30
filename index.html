@@ -3,117 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Resume Generator</title>
+    <title>Modern Resume Builder</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; color: #333; max-width: 800px; margin: 2rem auto; padding: 2rem; }
-        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; }
-        h3 { color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 0.5rem; margin-top: 1.5rem; }
-        .warning { background: #fff3cd; color: #856404; padding: 1rem; border-radius: 4px; border-left: 5px solid #ffeeba; margin-bottom: 1rem; }
-        label { display: block; font-weight: bold; margin-top: 1rem; margin-bottom: 0.2rem; }
-        input, textarea { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
-        button { display: block; width: 100%; background: #e74c3c; color: white; padding: 1rem; border: none; border-radius: 4px; font-size: 1.1rem; cursor: pointer; margin-top: 2rem; transition: background 0.3s; }
-        button:hover { background: #c0392b; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; display: flex; justify-content: center; padding: 20px; }
+        .app-container { background: white; width: 100%; max-width: 900px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        h1 { text-align: center; color: #2c3e50; font-size: 28px; margin-bottom: 10px; }
+        p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 40px; }
+        
+        .form-section { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .form-section h3 { color: #34495e; margin-bottom: 15px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
+        
+        label { display: block; font-weight: 600; margin: 10px 0 5px; color: #2c3e50; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: 0.3s; }
+        input:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52, 152, 219, 0.2); }
+        textarea { resize: vertical; font-family: inherit; }
+
+        .btn-download { background: linear-gradient(135deg, #2980b9, #2c3e50); color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: transform 0.2s; }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4); }
+
+        .row { display: flex; gap: 20px; }
+        .col { flex: 1; }
+        @media (max-width: 600px) { .row { flex-direction: column; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📄 Client-Side Resume Generator</h1>
-    <div class="warning">
-        <strong>🔒 Privacy Mode:</strong> This tool runs 100% in your browser. No data is sent to any server.
+<div class="app-container">
+    <h1>🚀 Modern Resume Architect</h1>
+    <p class="subtitle">Enter your details below to generate a professional, split-column resume.</p>
+
+    <div class="form-section">
+        <h3>👤 Personal Identity</h3>
+        <div class="row">
+            <div class="col">
+                <label>Full Name</label>
+                <input type="text" id="name" placeholder="Imtheyas F.M">
+            </div>
+            <div class="col">
+                <label>Job Title</label>
+                <input type="text" id="jobTitle" placeholder="Technical Team Lead">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>Phone</label>
+                <input type="text" id="phone" placeholder="+91-8248524660">
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="text" id="email" placeholder="mohamedimtheyas254@gmail.com">
+            </div>
+            <div class="col">
+                <label>Location</label>
+                <input type="text" id="location" placeholder="Coimbatore, India">
+            </div>
+        </div>
     </div>
 
-    <h3>1. Personal Details (Required)</h3>
-    <label>Full Name</label>
-    <input type="text" id="name" placeholder="e.g. Imtheyas F.M.">
-    
-    <label>Contact Info</label>
-    <input type="text" id="contact" placeholder="City | Phone | Email">
+    <div class="form-section">
+        <h3>🛠️ Sidebar Content (Skills & Edu)</h3>
+        <div class="row">
+            <div class="col">
+                <label>Skills (One per line)</label>
+                <textarea id="skills" rows="5">Perl (Modern)
+DMN Architecture
+SQL / Unix Shell
+Agile / Scrum
+Jira / Atlas
+Legacy Migration
+Team Leadership</textarea>
+            </div>
+            <div class="col">
+                <label>Education & Certs</label>
+                <textarea id="education" rows="5">B.E. ECE (2019)
+Sri Eshwar College
 
-    <h3>2. Professional Summary</h3>
-    <textarea id="summary" rows="4">Technical Team Lead & Backend Engineer with 4+ years of experience specializing in Legacy Modernization and Data Integration. Expert in orchestrating complex migrations from Perl to DMN architectures and leading Agile teams to reduce delivery cycle times.</textarea>
+GitHub Copilot Cert
+NPTEL IoT Cert</textarea>
+            </div>
+        </div>
+    </div>
 
-    <h3>3. Experience (Optimized)</h3>
-    
-    <label>Role 1 (Latest)</label>
-    <textarea id="role1" rows="6">Team Lead / Senior Software Engineer | GAVS Technologies | 09/2022 - Present
-- Orchestrated the strategic migration of legacy business logic from Perl to DMN, reducing rule processing latency by ~20%.
-- Spearheaded Agile ceremonies (Sprint Planning, Retrospectives) for a team of 5+ engineers.
-- Collaborated with Product Owners to refine backlog requirements.</textarea>
+    <div class="form-section">
+        <h3>📄 Main Experience</h3>
+        <label>Professional Summary</label>
+        <textarea id="summary" rows="3">Results-oriented Technical Team Lead with 4+ years of experience driving legacy modernization. Expert in migrating Perl-based logic to DMN architectures and facilitating Agile ceremonies to improve delivery velocity.</textarea>
+        
+        <label>Experience 1 (Latest)</label>
+        <textarea id="exp1" rows="5">Team Lead / Senior Software Engineer
+GAVS Technologies | 09/2022 - Present
+• Orchestrated migration of legacy business logic from Perl to DMN, reducing latency by 20%.
+• Facilitated Scrum ceremonies (Planning, Reviews) for a team of 5 engineers.
+• Collaborated with Product Owners to refine requirements and ensure alignment.</textarea>
 
-    <label>Role 2</label>
-    <textarea id="role2" rows="6">Software Engineer | RR Donnelly | 04/2021 - 09/2022
-- Engineered robust data integration scripts in Perl, automating manual workflows to save 10+ hours weekly.
-- Resolved P1/P2 production incidents during on-call rotations, maintaining 99.9% system availability.
-- Optimized legacy codebase achieving a 15% reduction in execution time.</textarea>
+        <label>Experience 2</label>
+        <textarea id="exp2" rows="5">Software Engineer
+RR Donnelly | 04/2021 - 09/2022
+• Engineered Perl-based data integration solutions to support high-volume environments.
+• Resolved critical production issues via on-call rotation, ensuring 99.9% uptime.
+• Optimized existing scripts reducing data processing time by 15%.</textarea>
 
-    <label>Role 3</label>
-    <textarea id="role3" rows="6">Member Technical | Broadridge Financial Solutions | 05/2019 - 01/2021
-- Refactored critical Perl modules to enhance security protocols and code readability.
-- Identified and integrated new data sources expanding system reporting capabilities.
-- Awarded 'Quarterly Star' twice for excellence in defect-free code delivery.</textarea>
+        <label>Experience 3</label>
+        <textarea id="exp3" rows="5">Member Technical
+Broadridge Financial | 05/2019 - 01/2021
+• Refactored Perl modules to improve application security and readability.
+• Integrated new data sources to enhance system reporting capabilities.
+• Awarded 'Quarterly Star' twice for delivery excellence.</textarea>
+    </div>
 
-    <button onclick="generatePDF()">⬇️ Download Secure PDF</button>
+    <button class="btn-download" onclick="generateModernPDF()">✨ Generate Modern PDF</button>
 </div>
 
 <script>
-    // PDF Generation Logic
-    function generatePDF() {
+    function generateModernPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+
+        // COLORS
+        const SIDEBAR_COLOR = [44, 62, 80]; // Dark Navy
+        const TEXT_LIGHT = [255, 255, 255]; // White
+        const TEXT_DARK = [44, 62, 80]; // Dark Grey
+        const ACCENT_COLOR = [52, 152, 219]; // Light Blue
+
+        // DIMENSIONS
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
+        const sidebarWidth = 65; // Width of left column
+        const margin = 10;
         
-        // Fetch Inputs
-        const name = document.getElementById('name').value || "YOUR NAME";
-        const contact = document.getElementById('contact').value || "CONTACT INFO";
-        const summary = document.getElementById('summary').value;
-        const role1 = document.getElementById('role1').value;
-        const role2 = document.getElementById('role2').value;
-        const role3 = document.getElementById('role3').value;
+        // --- DRAW SIDEBAR (LEFT) ---
+        doc.setFillColor(...SIDEBAR_COLOR);
+        doc.rect(0, 0, sidebarWidth, pageHeight, 'F');
 
-        let y = 20; // Vertical cursor position
+        // --- SIDEBAR CONTENT ---
+        let ySide = 20;
 
-        // Helper to add text and move cursor
-        function addText(text, size, isBold = false) {
-            doc.setFontSize(size);
-            doc.setFont("helvetica", isBold ? "bold" : "normal");
+        // Photo Placeholder (Circle)
+        doc.setFillColor(200, 200, 200);
+        doc.circle(sidebarWidth/2, 35, 18, 'F');
+        doc.setFontSize(24);
+        doc.setTextColor(255, 255, 255);
+        // Initials inside circle
+        const nameVal = document.getElementById('name').value || "IM";
+        const initials = nameVal.split(' ').map(n => n[0]).join('').substring(0,2);
+        doc.text(initials, (sidebarWidth/2)-6, 43);
+
+        ySide = 70;
+
+        // Helper: Sidebar Section
+        function addSidebarSection(title, contentId) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(...ACCENT_COLOR);
+            doc.text(title.toUpperCase(), margin, ySide);
+            ySide += 7;
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(...TEXT_LIGHT);
             
-            // Text Wrapping
-            const splitText = doc.splitTextToSize(text, 180);
-            doc.text(splitText, 15, y);
-            y += (splitText.length * size * 0.4) + 2; 
+            const text = document.getElementById(contentId).value;
+            const splitText = doc.splitTextToSize(text, sidebarWidth - (margin*2));
+            doc.text(splitText, margin, ySide);
+            ySide += (splitText.length * 5) + 10;
         }
 
-        // Header
-        addText(name, 22, true);
-        addText(contact, 10);
-        doc.setLineWidth(0.5);
-        doc.line(15, y, 195, y);
-        y += 10;
+        // Contact Info (Manual Render for icons)
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(...ACCENT_COLOR);
+        doc.text("CONTACT", margin, ySide);
+        ySide += 8;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...TEXT_LIGHT);
+        
+        const phone = document.getElementById('phone').value;
+        const email = document.getElementById('email').value;
+        const loc = document.getElementById('location').value;
+        
+        doc.text(phone, margin, ySide); ySide += 6;
+        const splitEmail = doc.splitTextToSize(email, sidebarWidth - 15);
+        doc.text(splitEmail, margin, ySide); ySide += (splitEmail.length * 5) + 2;
+        doc.text(loc, margin, ySide); ySide += 15;
+
+        // Skills & Education
+        addSidebarSection("SKILLS", "skills");
+        addSidebarSection("EDUCATION", "education");
+
+
+        // --- MAIN CONTENT (RIGHT) ---
+        let yMain = 20;
+        const xMain = sidebarWidth + 15;
+        const mainWidth = pageWidth - sidebarWidth - 25;
+
+        // Header (Name & Title)
+        const name = document.getElementById('name').value || "YOUR NAME";
+        const job = document.getElementById('jobTitle').value || "JOB TITLE";
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(26);
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(name.toUpperCase(), xMain, yMain + 5);
+        
+        doc.setFontSize(14);
+        doc.setTextColor(...ACCENT_COLOR);
+        doc.text(job.toUpperCase(), xMain, yMain + 14);
+        
+        doc.setDrawColor(200, 200, 200);
+        doc.line(xMain, yMain + 20, pageWidth - margin, yMain + 20);
+        
+        yMain += 30;
+
+        // Helper: Main Section
+        function addMainSection(title, content) {
+            // Check Page Break
+            if (yMain > 250) { doc.addPage(); yMain = 20; }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(...TEXT_DARK);
+            doc.text(title.toUpperCase(), xMain, yMain);
+            
+            // Blue underline for headers
+            doc.setDrawColor(...ACCENT_COLOR);
+            doc.setLineWidth(1);
+            doc.line(xMain, yMain + 2, xMain + 30, yMain + 2);
+            
+            yMain += 10;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10.5);
+            doc.setTextColor(60, 60, 60);
+
+            const lines = doc.splitTextToSize(content, mainWidth);
+            doc.text(lines, xMain, yMain);
+            yMain += (lines.length * 6) + 10;
+        }
 
         // Summary
-        addText("PROFESSIONAL SUMMARY", 12, true);
-        y += 2;
-        addText(summary, 10);
-        y += 5;
+        addMainSection("Professional Summary", document.getElementById('summary').value);
 
-        // Experience
-        addText("PROFESSIONAL EXPERIENCE", 12, true);
-        y += 2;
+        // Experience Loop
+        function addExperience(id) {
+            const raw = document.getElementById(id).value;
+            if(!raw) return;
+            
+            const lines = raw.split('\n');
+            const titleLine = lines[0]; // Title
+            const companyLine = lines[1]; // Company
+            const bullets = lines.slice(2).join('\n'); // Description
+
+            if (yMain > 240) { doc.addPage(); yMain = 20; }
+
+            // Title
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(titleLine, xMain, yMain);
+            yMain += 5;
+
+            // Company & Date
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(companyLine, xMain, yMain);
+            yMain += 6;
+
+            // Bullets
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(60, 60, 60);
+            const splitBullets = doc.splitTextToSize(bullets, mainWidth);
+            doc.text(splitBullets, xMain, yMain);
+            yMain += (splitBullets.length * 5) + 8;
+        }
         
-        // Role 1
-        addText(role1, 10);
-        y += 4;
-        
-        // Role 2
-        addText(role2, 10);
-        y += 4;
+        // Experience Header
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(...TEXT_DARK);
+        doc.text("WORK HISTORY", xMain, yMain);
+        doc.setDrawColor(...ACCENT_COLOR);
+        doc.line(xMain, yMain + 2, xMain + 30, yMain + 2);
+        yMain += 10;
 
-        // Role 3
-        addText(role3, 10);
+        addExperience('exp1');
+        addExperience('exp2');
+        addExperience('exp3');
 
-        doc.save("Imtheyas_Resume.pdf");
+        doc.save("Modern_Resume.pdf");
     }
 </script>
 
