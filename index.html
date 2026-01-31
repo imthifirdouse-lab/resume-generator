@@ -2,411 +2,638 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Resume Builder (Autofill Enabled)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magic Card: Dropdown Suite</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; overflow: hidden; }
+        :root { --bg: #f3f4f6; --surface: #ffffff; --text: #1f2937; --primary: #6366f1; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); display: flex; height: 100vh; margin: 0; overflow: hidden; color: var(--text); }
 
-        /* --- LAYOUT --- */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+
+        /* LAYOUT */
         .app-container { display: flex; width: 100%; height: 100%; }
-        
-        /* LEFT: EDITOR */
-        .editor-pane { width: 45%; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
-        .editor-header { padding: 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .editor-content { flex: 1; overflow-y: auto; padding: 30px; }
-        .editor-footer { padding: 20px; border-top: 1px solid #eee; background: #f9f9f9; display: flex; gap: 10px; }
+        @media (max-width: 800px) {
+            .app-container { flex-direction: column; overflow-y: auto; }
+            .input-panel { width: 100%; height: auto; padding: 20px; }
+            .preview-panel { min-height: 500px; padding: 40px 20px; justify-content: flex-start; overflow-x: hidden; }
+            body { overflow: auto; }
+        }
 
-        /* RIGHT: PREVIEW */
-        .preview-pane { width: 55%; background: #525659; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 40px; }
-        .resume-paper { background: white; width: 210mm; min-height: 297mm; padding: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; flex-direction: row; color: #333; }
+        .input-panel { width: 440px; background: var(--surface); padding: 30px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; z-index: 10; overflow-y: auto; }
+        .control-section { margin-bottom: 25px; border-bottom: 1px solid #f3f4f6; padding-bottom: 20px; }
+        .control-title { font-size: 11px; font-weight: 800; color: #9ca3af; margin-bottom: 10px; text-transform: uppercase; }
+        .sub-label { font-size: 10px; font-weight: 700; color: #6b7280; margin-bottom: 6px; display: block; }
 
-        /* --- FORM STYLING --- */
-        h2 { font-size: 18px; color: var(--primary); margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .form-group { margin-bottom: 15px; position: relative; }
-        label { display: block; font-size: 12px; font-weight: 700; color: #666; margin-bottom: 5px; text-transform: uppercase; }
-        
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s; }
-        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
-        textarea { resize: vertical; min-height: 80px; }
-        
-        .btn-add { background: #eef2f5; color: var(--primary); border: 1px dashed #bdc3c7; padding: 10px; width: 100%; cursor: pointer; border-radius: 4px; font-weight: 600; margin-top: 10px; }
-        .btn-delete { color: #e74c3c; cursor: pointer; font-size: 12px; text-decoration: underline; margin-top: 5px; display: inline-block; }
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1; text-align: center; }
-        
-        /* SUGGESTION MODAL */
-        .suggestion-btn { background: #e8f4fd; color: #3498db; border: none; padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; margin-bottom: 5px; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; transition: 0.2s; }
-        .suggestion-btn:hover { background: #3498db; color: white; }
+        /* INPUTS */
+        .smart-input, .std-input, select { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; background: #f9fafb; margin-bottom: 8px; }
+        .stat-input-group { display: flex; gap: 8px; margin-bottom: 8px; }
+        .emoji-input { width: 40px; text-align: center; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
+        .text-input { flex: 1; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
-        .modal-box { background: white; width: 500px; max-height: 80vh; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-header { font-weight: bold; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between; }
-        .modal-list { overflow-y: auto; flex: 1; }
-        .suggestion-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; color: #444; transition: 0.2s; display: flex; gap: 10px; align-items: flex-start; }
-        .suggestion-item:hover { background: #f0f7ff; color: #3498db; }
-        .suggestion-item i { margin-top: 3px; color: #27ae60; }
-        .modal-close { cursor: pointer; color: #999; }
+        /* SLIDERS */
+        .range-group { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .range-label { font-size: 10px; font-weight: 700; color: #666; width: 40px; }
+        input[type=range] { flex: 1; accent-color: var(--primary); }
 
-        /* --- PREVIEW STYLING --- */
-        #preview-sidebar { width: 32%; background: var(--primary); color: white; padding: 20px; }
-        #preview-main { width: 68%; padding: 30px; background: white; }
+        /* COLOR PICKERS */
+        .color-group { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .color-input { width: 40px; height: 40px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
+        .color-label { font-size: 11px; font-weight: 600; color: #666; }
+
+        /* PRESETS */
+        .preset-bar { display: flex; gap: 5px; margin-bottom: 10px; }
+        .preset-btn { font-size: 10px; padding: 4px 8px; border: 1px solid #e5e7eb; background: white; cursor: pointer; border-radius: 4px; }
+        .option-grid { display: grid; gap: 8px; margin-bottom: 10px; grid-template-columns: 1fr 1fr; }
+        .fx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .option-btn { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; cursor: pointer; font-size: 10px; font-weight: 600; color: #4b5563; }
+        .option-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* PREVIEW AREA */
+        .preview-panel { flex: 1; background: #e5e7eb; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; perspective: 1200px; }
         
-        .p-name { font-size: 24px; font-weight: 700; text-transform: uppercase; line-height: 1.2; }
-        .p-title { font-size: 14px; color: var(--accent); font-weight: 600; margin-bottom: 20px; text-transform: uppercase; }
-        .p-section-title { font-size: 12px; font-weight: 700; color: var(--accent); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; margin-top: 20px; letter-spacing: 1px; }
+        /* CARD */
+        .card-wrapper { 
+            position: relative; background: white; box-shadow: 0 30px 60px rgba(0,0,0,0.3); 
+            overflow: hidden; display: flex; transition: transform 0.1s cubic-bezier(0.1, 0.1, 0.1, 1); 
+            transform-style: preserve-3d; border-radius: 24px; 
+            width: 480px; height: 280px;
+            /* Default Text Scale Variables */
+            --name-scale: 1; --title-scale: 1; --stat-scale: 1;
+        }
         
-        .p-side-header { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
-        .p-contact-item { font-size: 10px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; opacity: 0.9; }
-        .p-skill-item { font-size: 10px; background: rgba(255,255,255,0.1); padding: 3px 8px; margin-bottom: 4px; display: inline-block; border-radius: 3px; }
+        @media (max-width: 600px) {
+            .card-wrapper.format-landscape { width: 85vw; max-width: 400px; height: auto; aspect-ratio: 1.71; }
+            .card-wrapper.format-portrait { width: 80vw; max-width: 320px; height: auto; aspect-ratio: 0.56; flex-direction: column; }
+            
+            /* Mobile Text Overrides (Scalable) */
+            .c-name { font-size: calc(22px * var(--name-scale)) !important; }
+            .c-title-row { font-size: calc(11px * var(--title-scale)) !important; }
+            .c-stat-item { font-size: calc(9px * var(--stat-scale)) !important; }
+        }
+
+        .layer-base, .layer-texture, .layer-finish { position: absolute; top:0; left:0; width:100%; height:100%; }
+        .layer-base { z-index: 1; transition: background 0.3s; }
+        .layer-texture { z-index: 2; mix-blend-mode: overlay; pointer-events: none; }
+        .layer-finish { z-index: 3; pointer-events: none; }
+        .layer-glare { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 20; pointer-events: none; mix-blend-mode: overlay; opacity: 0; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.6) 0%, transparent 60%); transition: opacity 0.1s; }
         
-        .p-job-block { margin-bottom: 15px; }
-        .p-job-title { font-weight: 700; font-size: 13px; color: #2c3e50; }
-        .p-job-company { font-style: italic; color: #7f8c8d; font-size: 11px; margin-bottom: 5px; }
-        .p-job-desc { font-size: 11px; color: #444; line-height: 1.5; white-space: pre-wrap; }
-        .p-initials { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; margin: 0 auto 20px; border: 2px solid rgba(255,255,255,0.2); }
+        .c-content { display: flex; width: 100%; height: 100%; z-index: 10; position: relative; }
+
+        /* THEMES */
+        .theme-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+        .theme-linkedin { background: linear-gradient(135deg, #0077b5, #005582); }
+        .theme-twitter { background: linear-gradient(135deg, #1da1f2, #0d8bd9); }
+        .theme-generic { background: linear-gradient(135deg, #1f2937, #111827); }
+        
+        .theme-gold { background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C); }
+        .theme-mesh { background: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%); background-color: #333; }
+        
+        .theme-sunset { background: linear-gradient(135deg, #FF512F, #DD2476); }
+        .theme-ocean { background: linear-gradient(135deg, #2193b0, #6dd5ed); }
+        .theme-forest { background: linear-gradient(135deg, #56ab2f, #a8e063); }
+        .theme-royal { background: linear-gradient(135deg, #4568DC, #B06AB3); }
+        .theme-midnight { background: linear-gradient(135deg, #000428, #004e92); }
+        .theme-candy { background: linear-gradient(135deg, #FF9A8B, #FF6A88, #FF99AC); }
+        .theme-cyber { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); }
+        .theme-noir { background: linear-gradient(135deg, #232526, #414345); }
+        .theme-rose { background: linear-gradient(135deg, #E0C3FC 0%, #8EC5FC 100%); }
+        .theme-sky { background: linear-gradient(135deg, #2980B9, #6DD5FA, #FFFFFF); }
+
+        .theme-india { background: linear-gradient(135deg, #FF9933 0%, #FFFFFF 50%, #138808 100%); }
+        .theme-csk { background: linear-gradient(135deg, #F9CD05 0%, #F9CD05 60%, #005697 100%); }
+        .theme-rcb { background: linear-gradient(135deg, #EC1C24 0%, #000000 80%); }
+        .theme-mi { background: linear-gradient(135deg, #004BA0 0%, #004BA0 60%, #D1AB3E 100%); }
+        .theme-srh { background: linear-gradient(135deg, #F7A721 0%, #000000 80%); }
+
+        /* FX */
+        .fx-noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E"); }
+        .fx-glass { background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.05) 51%, rgba(0,0,0,0.1) 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3); }
+        .fx-carbon { background: radial-gradient(black 15%, transparent 16%) 0 0, radial-gradient(black 15%, transparent 16%) 8px 8px, radial-gradient(rgba(255,255,255,0.1) 15%, transparent 20%) 0 1px, radial-gradient(rgba(255,255,255,0.1) 15%, transparent 20%) 8px 9px; background-size: 16px 16px; opacity: 0.2; }
+        .fx-vignette { background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.6) 100%); }
+
+        /* QR CODE */
+        .c-qr { 
+            position: absolute; bottom: 20px; right: 20px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px);
+            padding: 5px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            z-index: 100; display: flex; justify-content: center; align-items: center;
+            width: auto; height: auto;
+        }
+        .c-qr img, .c-qr canvas { display: block; width: var(--qr-size, 50px); height: var(--qr-size, 50px); }
+        .format-landscape.style-classic .c-qr { bottom: 20px; right: 20px; top: auto; }
+        .format-portrait .c-qr { bottom: 20px; right: 20px; }
+        
+        @media (max-width: 600px) {
+            .c-qr img, .c-qr canvas { width: calc(var(--qr-size, 50px) * 0.8) !important; height: calc(var(--qr-size, 50px) * 0.8) !important; }
+        }
+
+        /* CONTENT */
+        .style-classic .c-left { width: 35%; display: flex; justify-content: center; align-items: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.2); }
+        .format-portrait.style-classic .c-left { height: 35%; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.2); border-right: none; }
+        .style-classic .c-right { flex: 1; padding: 30px; display: flex; flex-direction: column; justify-content: center; color: white; }
+        .style-classic .c-avatar { width: 90px; height: 90px; border-radius: 50%; background: white; border: 4px solid rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; overflow: hidden; color: #333; font-weight: 800; font-size: 30px; }
+
+        .style-modern .c-content { flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; }
+        .style-modern .c-avatar { width: 100px; height: 100px; border-radius: 25px; background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 15px; color: #333; font-weight: 800; font-size: 35px; border: 2px solid rgba(255,255,255,0.5); }
+
+        .c-img { width: 100%; height: 100%; object-fit: cover; }
+        .c-handle { font-size: calc(11px * var(--title-scale)); font-weight: 700; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        
+        /* SCALABLE ELEMENTS */
+        .c-name { font-size: calc(26px * var(--name-scale)); font-weight: 800; line-height: 1.1; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); white-space: nowrap; }
+        .c-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: calc(13px * var(--title-scale)); font-weight: 500; opacity: 0.9; }
+        
+        .c-stats-row { display: flex; gap: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); width: fit-content; max-width: 100%; }
+        .style-modern .c-stats-row { margin: 0 auto 12px auto; }
+        .c-stat-item { display: flex; align-items: center; gap: 4px; font-size: calc(11px * var(--stat-scale)); font-weight: 700; white-space: nowrap; }
+        
+        @media (max-width: 600px) {
+            .c-stats-row { gap: 4px !important; padding: 4px 8px !important; width: 95% !important; justify-content: center; }
+        }
+
+        .c-stat-emoji { font-size: calc(13px * var(--stat-scale)); }
+        .c-info-row { display: flex; align-items: center; gap: 8px; font-size: calc(12px * var(--title-scale)); margin-bottom: 6px; font-weight: 500; }
+        
+        .c-tag { display: none; padding: 4px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 10px; font-weight: 700; margin-top: auto; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+
+        .btn-dl { padding: 12px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; gap: 8px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-png { background: #1f2937; color: white; }
+        .btn-pdf { background: #ef4444; color: white; }
+        .btn-html { background: #10b981; color: white; }
+        .btn-vcard { background: #2563eb; color: white; margin-left: auto; } 
+
+        .drop-zone { border: 2px dashed #d1d5db; border-radius: 12px; padding: 20px; text-align: center; background: #f9fafb; cursor: pointer; margin-top: 10px; }
+        .hidden-file { display: none; }
+        .qr-controls { margin-top: 15px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .free-mode-toggle { margin-top: 15px; padding: 10px; background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .reset-btn { font-size: 10px; color: #d32f2f; cursor: pointer; text-decoration: underline; background: none; border: none; }
+
+        .custom-layout .c-content { display: block; }
+        .custom-layout .c-left { position: absolute; top: 30px; left: 30px; border: none !important; width: auto !important; height: auto !important; }
+        .custom-layout .c-right { position: absolute; top: 30px; left: 150px; width: auto !important; padding: 0 !important; }
+        .custom-layout .c-qr { position: absolute; } 
+
+        .drag-active .drag-el { cursor: move; outline: 1px dashed rgba(255,255,255,0.5); user-select: none; }
+        .drag-active .drag-el:hover { outline: 2px solid #6366f1; }
+        .tilt-btn { background: #2563eb; color: white; font-weight: bold; width: 100%; border: none; padding: 10px; border-radius: 8px; margin-top: 8px; cursor: pointer; }
+        
+        .tap-hint { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 9999; }
+        
+        .fab-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: none; } 
+        .fab-btn { background: #2563eb; color: white; border: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(37,99,235,0.4); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.2s; }
+        .fab-btn:hover { transform: scale(1.05); }
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
-<div class="modal-overlay" id="suggestionModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <span>✨ Smart Suggestions</span>
-            <span class="modal-close" onclick="closeModal()">✕</span>
-        </div>
-        <div style="font-size:12px; color:#666; margin-bottom:10px;" id="suggestionContext">Showing suggestions for: <b>Software Engineer</b></div>
-        <div class="modal-list" id="suggestionList">
-            </div>
-    </div>
-</div>
+<div id="loader"><h2>Loading...</h2></div>
 
 <div class="app-container">
-    <div class="editor-pane">
-        <div class="editor-header">
-            <span style="font-weight:700; color: var(--primary);"><i class="fas fa-magic"></i> Resume Builder + AI Suggestions</span>
-            <input type="color" id="themeColor" value="#3498db" onchange="updateTheme(this.value)" style="width:50px; padding:2px; height:30px;">
-        </div>
-        
-        <div class="editor-content">
-            <h2><i class="fas fa-user-circle"></i> Personal Details</h2>
-            <div class="form-group"><label>Full Name</label><input type="text" id="inputName" placeholder="Imtheyas F.M" oninput="updatePreview()"></div>
-            <div class="form-group"><label>Target Job Title</label><input type="text" id="inputTitle" placeholder="Senior Technical Lead" oninput="updatePreview()"></div>
-            <div class="form-group">
-                <label>Contact Info</label>
-                <input type="text" id="inputPhone" placeholder="Phone" oninput="updatePreview()">
-                <input type="text" id="inputEmail" placeholder="Email" style="margin-top:5px" oninput="updatePreview()">
-                <input type="text" id="inputLocation" placeholder="Location" style="margin-top:5px" oninput="updatePreview()">
+    <div class="input-panel">
+        <div class="brand"><i class="fas fa-gem"></i> PremiumCard</div>
+        <div class="subtitle">v24.0 (UI Cleanup)</div>
+
+        <div class="control-section">
+            <div class="control-title">1. Content</div>
+            <input type="text" class="smart-input" id="linkInput" placeholder="Paste link..." oninput="analyzeLink()">
+            <div class="drop-zone" id="dropArea" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i> <span>Drag & Drop or Paste</span>
+                <input type="file" id="fileInput" class="hidden-file" accept="image/*,video/*" onchange="handleFileSelect(this)">
             </div>
-
-            <h2><i class="fas fa-align-left"></i> Profile Summary</h2>
-            <div class="form-group">
-                <textarea id="inputSummary" placeholder="Write a compelling summary..." oninput="updatePreview()">Senior Technical Lead with 4+ years of expertise in Legacy Modernization...</textarea>
-            </div>
-
-            <h2><i class="fas fa-briefcase"></i> Experience</h2>
-            <div id="experience-container"></div>
-            <button class="btn-add" onclick="addExperienceField()">+ Add Position</button>
-
-            <h2><i class="fas fa-tools"></i> Skills</h2>
-            <div class="form-group">
-                <textarea id="inputSkills" rows="5" oninput="updatePreview()">Perl (Modern)&#10;DMN Architecture&#10;Agile / Scrum</textarea>
-            </div>
-
-            <h2><i class="fas fa-graduation-cap"></i> Education</h2>
-            <div class="form-group"><textarea id="inputEducation" rows="3" oninput="updatePreview()">B.E. ECE (2019)&#10;Sri Eshwar College</textarea></div>
         </div>
 
-        <div class="editor-footer">
-            <button class="btn-primary" onclick="generatePDF()"><i class="fas fa-file-download"></i> Download PDF</button>
+        <div class="control-section">
+            <div class="control-title">2. Layout</div>
+            <div class="option-grid">
+                <button class="option-btn active" onclick="setFormat('landscape', this)">Landscape</button>
+                <button class="option-btn" onclick="setFormat('portrait', this)">Portrait</button>
+            </div>
+            <div class="option-grid">
+                <button class="option-btn active" onclick="setStyle('classic', this)">Classic</button>
+                <button class="option-btn" onclick="setStyle('modern', this)">Modern</button>
+            </div>
+            
+            <div class="free-mode-toggle">
+                <div>
+                    <div style="font-size:11px; font-weight:700; color:#e65100;">🔓 UNLOCK POSITIONING</div>
+                    <button class="reset-btn" onclick="resetLayout()">Reset to Default</button>
+                </div>
+                <input type="checkbox" id="freeModeCheck" onchange="toggleFreeMode(this)">
+            </div>
+            <button class="tilt-btn" onclick="enableMotion()"><i class="fas fa-mobile-alt"></i> Enable Phone Tilt</button>
+        </div>
+
+        <div class="control-section">
+            <div class="control-title">3. Finishes & Colors</div>
+            <div style="margin-bottom: 15px;">
+                <div class="sub-label">CUSTOM GRADIENT</div>
+                <div class="color-group">
+                    <div><input type="color" id="col1" class="color-input" value="#1f2937" oninput="setCustomTheme()"><div class="color-label">Start</div></div>
+                    <div><input type="color" id="col2" class="color-input" value="#111827" oninput="setCustomTheme()"><div class="color-label">End</div></div>
+                </div>
+            </div>
+            
+            <div class="sub-label">THEME COLLECTION</div>
+            
+            <select id="themeSelect" class="smart-input" onchange="setThemeFromDropdown(this)">
+                <optgroup label="Essentials">
+                    <option value="default">Auto-Detect (Base)</option>
+                    <option value="theme-gold">Gold</option>
+                    <option value="theme-mesh">Mesh</option>
+                </optgroup>
+                <optgroup label="IPL & National">
+                    <option value="theme-india">India</option>
+                    <option value="theme-csk">CSK (Yellow/Blue)</option>
+                    <option value="theme-rcb">RCB (Red/Black)</option>
+                    <option value="theme-mi">MI (Blue/Gold)</option>
+                    <option value="theme-srh">SRH (Orange/Black)</option>
+                </optgroup>
+                <optgroup label="Nature & Mood">
+                    <option value="theme-sunset">Sunset</option>
+                    <option value="theme-ocean">Ocean</option>
+                    <option value="theme-forest">Forest</option>
+                    <option value="theme-sky">Sky</option>
+                    <option value="theme-rose">Rose</option>
+                </optgroup>
+                <optgroup label="Dark & Cyber">
+                    <option value="theme-midnight">Midnight</option>
+                    <option value="theme-cyber">Cyber</option>
+                    <option value="theme-noir">Noir</option>
+                    <option value="theme-royal">Royal</option>
+                    <option value="theme-candy">Candy</option>
+                </optgroup>
+            </select>
+            
+            <div class="sub-label" style="margin-top:10px;">FINISHES</div>
+            <div class="fx-grid">
+                <button class="option-btn" onclick="toggleFx('fx-glass', this)">Glass</button>
+                <button class="option-btn" onclick="toggleFx('fx-noise', this)">Grain</button>
+                <button class="option-btn" onclick="toggleFx('fx-carbon', this)">Carbon</button>
+                <button class="option-btn" onclick="toggleFx('fx-vignette', this)">Vignette</button>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-title">4. Data & QR</div>
+            
+            <div style="background:#fff3e0; padding:10px; border-radius:8px; margin-bottom:15px;">
+                <div class="sub-label" style="color:#e65100; margin-bottom:5px;">TYPOGRAPHY SCALE</div>
+                <div class="range-group"><span class="range-label">NAME</span><input type="range" id="scaleName" min="0.5" max="1.5" step="0.1" value="1" oninput="renderCard()"></div>
+                <div class="range-group"><span class="range-label">TITLE</span><input type="range" id="scaleTitle" min="0.5" max="1.5" step="0.1" value="1" oninput="renderCard()"></div>
+                <div class="range-group"><span class="range-label">STATS</span><input type="range" id="scaleStats" min="0.5" max="1.5" step="0.1" value="1" oninput="renderCard()"></div>
+            </div>
+
+            <input type="text" class="std-input" id="inName" placeholder="Name" oninput="renderCard()">
+            <input type="text" class="std-input" id="inTitle" placeholder="Subtitle" oninput="renderCard()">
+            <input type="text" class="std-input" id="inPhone" placeholder="Phone Number" oninput="renderCard()">
+            <input type="text" class="std-input" id="inContact" placeholder="Contact Info" oninput="renderCard()">
+            
+            <div class="sub-label" style="margin-top:10px;">STATS</div>
+            <div class="preset-bar">
+                <button class="preset-btn" onclick="setEmojis('📸','❤️','👤')">Insta</button>
+                <button class="preset-btn" onclick="setEmojis('🤝','👥','📄')">LinkedIn</button>
+            </div>
+            <div class="stat-input-group"><input type="text" class="emoji-input" id="inEmoji1" value="📸" oninput="renderCard()"><input type="text" class="std-input" id="inStat1" value="Post" oninput="renderCard()"></div>
+            <div class="stat-input-group"><input type="text" class="emoji-input" id="inEmoji2" value="❤️" oninput="renderCard()"><input type="text" class="std-input" id="inStat2" value="Followers" oninput="renderCard()"></div>
+            <div class="stat-input-group"><input type="text" class="emoji-input" id="inEmoji3" value="👤" oninput="renderCard()"><input type="text" class="std-input" id="inStat3" value="Following" oninput="renderCard()"></div>
+
+            <div class="qr-controls">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="font-size:11px; font-weight:bold; color:#555;">QR CODE</span>
+                    <input type="checkbox" onchange="toggleQR(this)" checked>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:10px; color:#666;">Size:</span>
+                    <input type="range" id="qrSize" min="30" max="120" value="50" oninput="resizeQR()">
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="preview-pane">
-        <div class="resume-paper" id="resumePreview">
-            <div id="preview-sidebar">
-                <div class="p-initials" id="pInitials">IM</div>
-                <div class="p-side-header">CONTACT</div>
-                <div class="p-contact-item"><i class="fas fa-phone"></i> <span id="pPhone"></span></div>
-                <div class="p-contact-item"><i class="fas fa-envelope"></i> <span id="pEmail"></span></div>
-                <div class="p-contact-item"><i class="fas fa-map-marker-alt"></i> <span id="pLocation"></span></div>
-                <br>
-                <div class="p-side-header">SKILLS</div>
-                <div id="pSkills"></div>
-                <br>
-                <div class="p-side-header">EDUCATION</div>
-                <div id="pEducation" style="font-size:10px; line-height:1.4"></div>
-            </div>
+    <div class="preview-panel" id="previewPanel">
+        <div class="card-wrapper format-landscape style-classic" id="captureCard">
+            <div class="layer-base theme-generic" id="cardTheme"></div>
+            <div class="layer-texture" id="cardTexture"></div>
+            <div class="layer-finish" id="cardFinish"></div>
+            <div class="layer-glare" id="cardGlare"></div>
+            
+            <div class="c-content" id="cardContent">
+                <div class="c-left drag-el" id="dragAvatar"><div class="c-avatar" id="outAvatar">IM</div></div>
+                <div class="c-right drag-el" id="dragText">
+                    <div class="c-handle" id="outSource"><i class="fas fa-globe"></i> WEBSITE</div>
+                    <div class="c-name" id="outName">MYBRAND</div>
+                    
+                    <div class="c-title-row" id="outTitleRow" style="display:none;"><i class="fas fa-briefcase"></i> <span id="outTitle">Official Page</span></div>
 
-            <div id="preview-main">
-                <div class="p-name" id="pName">IMTHEYAS F.M</div>
-                <div class="p-title" id="pTitle">SENIOR TECHNICAL LEAD</div>
-                <div class="p-section-title">PROFESSIONAL SUMMARY</div>
-                <div class="p-job-desc" id="pSummary"></div>
-                <div class="p-section-title">WORK HISTORY</div>
-                <div id="pExperienceList"></div>
+                    <div class="c-stats-row" id="outStats" style="display:none;">
+                        <div class="c-stat-item"><span id="valStat1">Post</span> <span class="c-stat-emoji" id="outEmoji1">📸</span></div>
+                        <div class="c-stat-item"><span id="valStat2">Followers</span> <span class="c-stat-emoji" id="outEmoji2">❤️</span></div>
+                        <div class="c-stat-item"><span id="valStat3">Following</span> <span class="c-stat-emoji" id="outEmoji3">👤</span></div>
+                    </div>
+
+                    <div class="c-info-row" id="outPhoneRow" style="display:none;"><i class="fas fa-phone"></i> <span id="outPhone"></span></div>
+                    <div class="c-info-row" id="outContactRow" style="display:none;"><i class="fas fa-info-circle"></i> <span id="outContact">Contact Info</span></div>
+                    <div class="c-tag" id="outLink"></div>
+                </div>
             </div>
+            <div class="c-qr drag-el" id="qrContainer"></div>
         </div>
+
+        <div class="actions" style="display:flex; gap:10px;">
+            <button class="btn-dl btn-png" onclick="downloadPNG()"><i class="fas fa-image"></i> PNG</button>
+            <button class="btn-dl btn-pdf" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="btn-dl btn-html" onclick="downloadHTML()"><i class="fas fa-code"></i> Live Card</button>
+        </div>
+        <p style="margin-top:10px; font-size:11px; color:#666;">PNG = Social | PDF = Flat | Live = Animated</p>
     </div>
 </div>
 
+<div class="fab-container" id="fabContact">
+    <button class="fab-btn" onclick="downloadVCard()"><i class="fas fa-address-book"></i> Save Contact</button>
+</div>
+
+<div class="tap-hint" id="tapHint">👆 Tap card to visit profile</div>
+
 <script>
-    // --- DATABASE OF SUGGESTIONS ---
-    const suggestionsDB = {
-        "lead": [
-            "Orchestrated sprint planning, backlog grooming, and daily stand-ups for a team of X developers.",
-            "Mentored junior engineers, conducting code reviews and enforcing best practices.",
-            "Reduced technical debt by X% through strategic refactoring of legacy codebases.",
-            "Collaborated with Product Owners to translate business requirements into technical specs.",
-            "Spearheaded the migration from Monolithic architecture to Microservices."
-        ],
-        "software": [
-            "Developed scalable backend APIs using [Language], improving system throughput by X%.",
-            "Optimized SQL queries reducing data retrieval latency by X%.",
-            "Implemented CI/CD pipelines using Jenkins/GitLab to automate deployment.",
-            "Resolved critical production bugs under tight SLAs, ensuring 99.9% uptime.",
-            "Wrote comprehensive unit and integration tests achieving X% code coverage."
-        ],
-        "legacy": [
-            "Migrated complex business logic from Legacy Perl scripts to modern Rule Engines (DMN).",
-            "Refactored unmaintained codebase to improve security and readability.",
-            "Decoupled hardcoded logic into configurable parameters, increasing system flexibility.",
-            "Documented legacy workflows to facilitate knowledge transfer and onboarding."
-        ],
-        "data": [
-            "Engineered ETL pipelines to ingest terabytes of data from various sources.",
-            "Automated manual data reporting tasks, saving X hours of operational time weekly.",
-            "Designed data integration workflows ensuring data integrity and consistency."
-        ]
-    };
+    // -- STATE DEFINITION --
+    let cardState = { 
+        name: "MyBrand", 
+        link: "", 
+        baseClass: "theme-generic", 
+        source: "WEBSITE", 
+        icon: "fa-globe", 
+        fullUrl: "https://example.com", 
+        phone: "", 
+        customBg: null,
+        scales: { name: 1, title: 1, stats: 1 } 
+    }; //__STATE__
+    
+    let isFreeMode = false;
+    let uploadedMediaData = null; 
+    let userInteracting = false; 
+    let lastGyroTime = 0; 
 
-    let experiences = [
-        { title: "Team Lead", company: "GAVS Technologies", dates: "09/2022 - Present", desc: "Orchestrated migration of legacy business logic from Perl to DMN.\nFacilitated Scrum ceremonies." },
-        { title: "Software Engineer", company: "RR Donnelly", dates: "04/2021 - 09/2022", desc: "Engineered Perl-based data integration solutions.\nResolved critical production issues." }
-    ];
+    function initApp() {
+        document.getElementById('loader').style.display='none';
+        if(document.getElementById('linkInput')) {
+            generateQR(); 
+            initDrag();
+        } else {
+            // DOWNLOADED MODE
+            document.body.addEventListener('click', enableMotion);
+            document.getElementById('captureCard').style.cursor = 'pointer';
+            document.getElementById('captureCard').onclick = function() {
+                if(cardState.fullUrl) window.open(cardState.fullUrl, '_blank');
+            };
+            setTimeout(() => { document.getElementById('tapHint').style.opacity = '1'; }, 1000);
+            const fab = document.getElementById('fabContact');
+            if(fab) fab.style.display = 'block';
+            
+            if(cardState.customBg) {
+                document.getElementById('cardTheme').style.background = cardState.customBg;
+                document.getElementById('cardTheme').className = 'layer-base';
+            }
+            // Restore Scales
+            if(cardState.scales) {
+                const c = document.getElementById('captureCard');
+                c.style.setProperty('--name-scale', cardState.scales.name);
+                c.style.setProperty('--title-scale', cardState.scales.title);
+                c.style.setProperty('--stat-scale', cardState.scales.stats);
+            }
+        }
+        init3D(); 
+        requestAnimationFrame(autoPlayLoop); 
+    }
 
-    let activeExpIndex = null;
-
-    window.onload = function() {
-        if(localStorage.getItem('resumeData')) loadData();
-        else renderExperienceInputs();
-        updatePreview();
-    };
-
-    // --- SUGGESTION LOGIC ---
-    function openSuggestions(index) {
-        activeExpIndex = index;
-        const jobTitle = experiences[index].title.toLowerCase();
-        const modal = document.getElementById('suggestionModal');
-        const list = document.getElementById('suggestionList');
-        const contextText = document.getElementById('suggestionContext');
+    // --- COLOR ENGINE & DROPDOWN ---
+    function setCustomTheme() {
+        const c1 = document.getElementById('col1').value;
+        const c2 = document.getElementById('col2').value;
+        const bg = `linear-gradient(135deg, ${c1}, ${c2})`;
+        const themeEl = document.getElementById('cardTheme');
+        themeEl.className = 'layer-base'; 
+        themeEl.style.background = bg;
+        cardState.customBg = bg;
         
-        list.innerHTML = "";
-        let matches = [];
+        // Reset Dropdown
+        document.getElementById('themeSelect').value = '';
+    }
 
-        // Simple Keyword Matching
-        if(jobTitle.includes('lead') || jobTitle.includes('manager')) matches = [...matches, ...suggestionsDB.lead];
-        if(jobTitle.includes('engineer') || jobTitle.includes('developer')) matches = [...matches, ...suggestionsDB.software];
-        if(jobTitle.includes('legacy') || jobTitle.includes('perl') || jobTitle.includes('migration')) matches = [...matches, ...suggestionsDB.legacy];
-        if(jobTitle.includes('data')) matches = [...matches, ...suggestionsDB.data];
+    function setThemeFromDropdown(el) {
+        const theme = el.value;
+        if(theme) {
+            // Reset Custom
+            document.getElementById('cardTheme').style.background = '';
+            cardState.customBg = null;
+            // Apply Preset
+            document.getElementById('cardTheme').className = theme === 'default' ? `layer-base ${cardState.baseClass}` : `layer-base ${theme}`;
+        }
+    }
+
+    // --- ANALYZE LINK (UPDATED FOR DROPDOWN RESET) ---
+    function analyzeLink() {
+        const urlRaw = document.getElementById('linkInput').value.trim();
+        if(!urlRaw) return;
+        let cleanUrl = urlRaw; if (!/^https?:\/\//i.test(urlRaw)) { cleanUrl = 'https://' + urlRaw; } cardState.fullUrl = cleanUrl;
+        let domain = ""; try { domain = new URL(cleanUrl).hostname.toLowerCase(); } catch (e) { return; }
+        let displayUrl = urlRaw.replace(/^https?:\/\//, '').replace(/^www\./, '');
+        let parts = displayUrl.split('/');
+        let handle = parts[1] ? parts[1].split('?')[0] : '';
+        let newTheme='theme-generic', newSource='WEBSITE', newIcon='fa-globe';
+        if (domain.includes('instagram.com')) { newTheme='theme-instagram'; newSource='INSTAGRAM'; newIcon='fa-instagram'; setEmojis('📸','❤️','👤'); }
+        else if (domain.includes('linkedin.com')) { newTheme='theme-linkedin'; newSource='LINKEDIN'; newIcon='fa-linkedin'; setEmojis('🤝','👥','📄'); if(parts[1] === 'in' && parts[2]) handle = parts[2].split('?')[0]; }
+        else if (domain.includes('twitter.com') || domain.includes('x.com')) { newTheme='theme-twitter'; newSource='TWITTER'; newIcon='fa-twitter'; setEmojis('🐦','🔁','❤️'); }
         
-        // Default fallback if no keywords match
-        if(matches.length === 0) matches = [...suggestionsDB.software, ...suggestionsDB.lead];
+        // Update Auto-Base state
+        cardState.baseClass = newTheme; 
+        cardState.source = newSource; 
+        cardState.icon = newIcon; 
+        
+        // Auto-Reset to Base unless Custom is active
+        if(!cardState.customBg) {
+            document.getElementById('themeSelect').value = 'default';
+            document.getElementById('cardTheme').className = `layer-base ${newTheme}`;
+        }
+        
+        if(handle) { cardState.name = handle; document.getElementById('inName').value = handle; }
+        generateQR(); renderCard();
+    }
 
-        contextText.innerHTML = `Suggestions based on: <b>${experiences[index].title || "General Role"}</b>`;
+    // --- RENDER ---
+    function renderCard() {
+        const sName = document.getElementById('scaleName').value;
+        const sTitle = document.getElementById('scaleTitle').value;
+        const sStats = document.getElementById('scaleStats').value;
+        const c = document.getElementById('captureCard');
+        c.style.setProperty('--name-scale', sName);
+        c.style.setProperty('--title-scale', sTitle);
+        c.style.setProperty('--stat-scale', sStats);
+        cardState.scales = { name: sName, title: sTitle, stats: sStats };
 
-        matches.forEach(text => {
-            const item = document.createElement('div');
-            item.className = 'suggestion-item';
-            item.innerHTML = `<i class="fas fa-plus-circle"></i> <span>${text}</span>`;
-            item.onclick = () => addSuggestion(text);
-            list.appendChild(item);
+        const inName = document.getElementById('inName').value;
+        const inTitle = document.getElementById('inTitle').value;
+        const inContact = document.getElementById('inContact').value;
+        const inPhone = document.getElementById('inPhone').value;
+        
+        cardState.name = inName || cardState.name;
+        cardState.phone = inPhone;
+
+        document.getElementById('outName').innerText = cardState.name;
+        document.getElementById('outSource').innerHTML = `<i class="fab ${cardState.icon}"></i> ${cardState.source}`;
+        
+        const tr = document.getElementById('outTitleRow'); if(inTitle) { tr.style.display = 'flex'; document.getElementById('outTitle').innerText = inTitle; } else { tr.style.display = 'none'; }
+        const pr = document.getElementById('outPhoneRow'); if(inPhone) { pr.style.display = 'flex'; document.getElementById('outPhone').innerText = inPhone; } else { pr.style.display = 'none'; }
+        const cr = document.getElementById('outContactRow'); if(inContact) { cr.style.display = 'flex'; document.getElementById('outContact').innerText = inContact; } else { cr.style.display = 'none'; }
+        const s1 = document.getElementById('inStat1').value; const s2 = document.getElementById('inStat2').value; const s3 = document.getElementById('inStat3').value; const sr = document.getElementById('outStats');
+        if(s1 || s2 || s3) { sr.style.display = 'flex'; document.getElementById('outEmoji1').innerText = document.getElementById('inEmoji1').value; document.getElementById('valStat1').innerText = s1 || "-"; document.getElementById('outEmoji2').innerText = document.getElementById('inEmoji2').value; document.getElementById('valStat2').innerText = s2 || "-"; document.getElementById('outEmoji3').innerText = document.getElementById('inEmoji3').value; document.getElementById('valStat3').innerText = s3 || "-"; } else { sr.style.display = 'none'; }
+        
+        const av = document.getElementById('outAvatar'); 
+        if((!av.querySelector('img') && !av.querySelector('video')) || (av.querySelector('img') && av.querySelector('img').style.display==='none')) { 
+            av.innerText = (inName || cardState.name).substring(0,2).toUpperCase(); 
+        }
+    }
+
+    // --- HTML EXPORT (FIXED TOKEN) ---
+    function downloadHTML() {
+        const title = document.getElementById('inName').value || 'Card';
+        const docClone = document.documentElement.cloneNode(true);
+        const uiElements = docClone.querySelectorAll('.input-panel, .actions, p');
+        uiElements.forEach(el => el.remove());
+        const container = docClone.querySelector('.app-container');
+        container.style.justifyContent = 'center'; container.style.alignItems = 'center'; container.style.height = '100vh';
+        
+        if(uploadedMediaData) {
+            const avatarDiv = docClone.querySelector('#outAvatar');
+            if(uploadedMediaData.startsWith('data:video')) {
+               avatarDiv.innerHTML = `<video src="${uploadedMediaData}" class="c-img" autoplay loop muted playsinline></video>`;
+            } else {
+               avatarDiv.innerHTML = `<img src="${uploadedMediaData}" class="c-img">`;
+            }
+        }
+
+        let htmlContent = docClone.outerHTML;
+        const stateJSON = JSON.stringify(cardState);
+        const regex = /let cardState = .*?\/\/__STATE__/s;
+        htmlContent = htmlContent.replace(regex, `let cardState = ${stateJSON}; //__STATE__`);
+        
+        const scriptEnd = '<\/script>';
+        const enableFab = `document.getElementById('fabContact').style.display = 'block';`;
+        htmlContent = htmlContent.replace(scriptEnd, `${enableFab}${scriptEnd}`);
+
+        const blob = new Blob([htmlContent], {type: 'text/html'});
+        const a = document.createElement('a'); a.download = `Live_Card_${title}.html`; a.href = URL.createObjectURL(blob); a.click();
+    }
+
+    // --- VCARD (STRICT CLEAN) ---
+    function downloadVCard() {
+        const name = cardState.name || "Contact";
+        const phone = cardState.phone || "";
+        let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nN:;${name};;;`;
+        if(phone) vcard += `\nTEL;TYPE=CELL:${phone}`;
+        vcard += `\nEND:VCARD`;
+        const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `contact_${name}.vcf`; a.click();
+    }
+
+    // --- PHYSICS ---
+    function init3D() {
+        const p = document.getElementById('previewPanel');
+        const c = document.getElementById('captureCard');
+        const g = document.getElementById('cardGlare');
+        p.addEventListener('mouseenter', () => { userInteracting = true; });
+        p.addEventListener('mouseleave', () => { userInteracting = false; });
+        p.addEventListener('mousemove', (e) => {
+            if(isFreeMode || window.innerWidth<800) return;
+            const r = c.getBoundingClientRect();
+            const x = e.clientX - r.left; const y = e.clientY - r.top;
+            const cx = r.width/2; const cy = r.height/2;
+            const rx = ((y-cy)/cy)*-12; const ry = ((x-cx)/cx)*12;
+            c.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+            g.style.opacity = '1';
+            g.style.transform = `translate(${x}px, ${y}px)`;
+            g.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.3) 0%, transparent 80%)`;
         });
-
-        modal.style.display = 'flex';
     }
 
-    function closeModal() {
-        document.getElementById('suggestionModal').style.display = 'none';
+    function autoPlayLoop(timestamp) {
+        let timeSinceGyro = Date.now() - lastGyroTime;
+        let isGyroActive = timeSinceGyro < 500; 
+        if(!userInteracting && !isFreeMode && !isGyroActive) {
+            const c = document.getElementById('captureCard');
+            const g = document.getElementById('cardGlare');
+            const t = timestamp * 0.001;
+            const rx = Math.sin(t * 1.5) * 6; const ry = Math.cos(t * 1.2) * 8; 
+            c.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+            const gx = 50 + (ry * 3); const gy = 50 + (rx * 3);
+            g.style.opacity = '0.6';
+            g.style.background = `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.3) 0%, transparent 60%)`;
+        }
+        requestAnimationFrame(autoPlayLoop);
     }
 
-    function addSuggestion(text) {
-        const currentDesc = experiences[activeExpIndex].desc;
-        const separator = currentDesc.length > 0 ? '\n' : '';
-        experiences[activeExpIndex].desc = currentDesc + separator + "• " + text;
-        renderExperienceInputs(); // Re-render to show new text
-        updatePreview();
-        closeModal();
+    function generateQR() { const qrBox = document.getElementById('qrContainer'); const isChecked = document.querySelector('.qr-controls input[type="checkbox"]').checked; if (!isChecked) { qrBox.style.display = 'none'; return; } qrBox.style.display = 'flex'; qrBox.innerHTML = ""; new QRCode(qrBox, { text: cardState.fullUrl, width: 256, height: 256, colorDark : "#000000", colorLight : "rgba(255,255,255,0)", correctLevel : QRCode.CorrectLevel.M }); resizeQR(); }
+    function resizeQR() { const size = document.getElementById('qrSize').value; document.getElementById('qrContainer').style.setProperty('--qr-size', size + 'px'); }
+    function toggleFreeMode(cb) { isFreeMode = cb.checked; const c=document.getElementById('captureCard'); if(isFreeMode){c.classList.add('drag-active','custom-layout');c.style.transform="none";}else{c.classList.remove('drag-active');} }
+    function resetLayout() { const c=document.getElementById('captureCard'); const a=document.getElementById('dragAvatar'); const t=document.getElementById('dragText'); const q=document.getElementById('qrContainer'); c.classList.remove('custom-layout'); a.style=""; t.style=""; q.style=""; q.style.bottom='20px'; q.style.right='20px'; }
+    function initDrag() { const els=[document.getElementById('dragAvatar'), document.getElementById('dragText'), document.getElementById('qrContainer')]; let activeEl=null; let startX=0; let startY=0; let initLeft=0; let initTop=0; els.forEach(el=>{el.addEventListener('mousedown',(e)=>{if(!isFreeMode)return;activeEl=el;e.preventDefault();startX=e.clientX;startY=e.clientY;initLeft=activeEl.offsetLeft;initTop=activeEl.offsetTop;if(getComputedStyle(activeEl).position!=='absolute'){activeEl.style.position='absolute';activeEl.style.left=initLeft+'px';activeEl.style.top=initTop+'px';activeEl.style.bottom='auto';activeEl.style.right='auto';}});}); document.addEventListener('mousemove',(e)=>{if(!activeEl)return;const dx=e.clientX-startX;const dy=e.clientY-startY;activeEl.style.left=(initLeft+dx)+'px';activeEl.style.top=(initTop+dy)+'px';}); document.addEventListener('mouseup',()=>{activeEl=null;}); }
+    
+    function enableMotion() { 
+        document.getElementById('tapHint').style.display = 'none'; 
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { DeviceMotionEvent.requestPermission().then(r => { if (r=='granted') window.addEventListener('deviceorientation', handleOrientation); }); } else { window.addEventListener('deviceorientation', handleOrientation); } 
     }
-
-    // --- CORE LOGIC ---
-    function addExperienceField() {
-        experiences.push({ title: "", company: "", dates: "", desc: "" });
-        renderExperienceInputs();
-        updatePreview();
+    
+    function handleOrientation(e) { 
+        if(isFreeMode) return; 
+        lastGyroTime = Date.now(); 
+        const c = document.getElementById('captureCard'); const g = document.getElementById('cardGlare'); let x = e.beta; let y = e.gamma; 
+        if (x>40) x=40; if (x<-40) x=-40; if (y>40) y=40; if (y<-40) y=-40; 
+        c.style.transform = `perspective(1000px) rotateX(${-x/2}deg) rotateY(${y/2}deg)`; g.style.opacity = (Math.abs(x)+Math.abs(y))/50; g.style.background = `linear-gradient(${y*4}deg, rgba(255,255,255,0.4) 0%, transparent 80%)`; 
     }
-
-    function removeExperience(index) {
-        experiences.splice(index, 1);
-        renderExperienceInputs();
-        updatePreview();
+    
+    function toggleQR(cb) { generateQR(); }
+    function toggleFx(f, b) { const l = ['fx-noise','fx-carbon','fx-glass','fx-holo','fx-vignette'].includes(f) ? 'cardTexture' : 'cardFinish'; const el = document.getElementById(l); if(el.classList.contains(f)) { el.classList.remove(f); b.classList.remove('active'); } else { el.className = l === 'cardTexture' ? 'layer-texture' : 'layer-finish'; el.classList.add(f); b.classList.add('active'); } }
+    function setFormat(f, b) { document.getElementById('captureCard').className = `card-wrapper format-${f} style-${document.querySelector('.style-modern.active') ? 'modern' : 'classic'}`; toggleActive(b); }
+    function setStyle(s, b) { document.getElementById('captureCard').className = `card-wrapper format-${document.querySelector('.option-btn[onclick*="format-landscape"].active') ? 'landscape' : 'portrait'} style-${s}`; toggleActive(b); }
+    function toggleActive(b) { b.parentElement.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active')); b.classList.add('active'); }
+    function setEmojis(e1, e2, e3) { document.getElementById('inEmoji1').value=e1; document.getElementById('inEmoji2').value=e2; document.getElementById('inEmoji3').value=e3; renderCard(); }
+    
+    async function prepareVideoForCapture(card) {
+        const video = card.querySelector('video');
+        if (video) {
+            video.pause();
+            const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const img = document.createElement('img'); img.src = canvas.toDataURL('image/png'); img.className = video.className; img.style.cssText = video.style.cssText;
+            video.style.display = 'none'; video.parentNode.insertBefore(img, video);
+            return { video, img };
+        }
+        return null;
     }
+    function restoreVideoAfterCapture(swap) { if(swap){ swap.img.remove(); swap.video.style.display='block'; swap.video.play(); } }
+    function downloadPNG() { const c=document.getElementById('captureCard'); const g=document.getElementById('cardGlare'); const pt=c.style.transform; c.style.transform = `perspective(1000px) rotateX(-5deg) rotateY(5deg)`; g.style.opacity = '0.4'; g.style.background = `radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 60%)`; setTimeout(async () => { const swap = await prepareVideoForCapture(c); html2canvas(c, { scale: 3, backgroundColor: null, useCORS: true }).then(c => { const a = document.createElement('a'); a.download = `Card_${cardState.name}.png`; a.href = c.toDataURL("image/png"); a.click(); restoreVideoAfterCapture(swap); c.style.transform = pt; g.style.opacity = '0'; }); }, 100); }
+    function downloadPDF() { const c=document.getElementById('captureCard'); const pt=c.style.transform; c.style.transform = "none"; setTimeout(async () => { const swap = await prepareVideoForCapture(c); html2canvas(c, { scale: 3, backgroundColor: null, useCORS: true }).then(c => { const pdf = new window.jspdf.jsPDF({ orientation: document.getElementById('captureCard').classList.contains('format-landscape') ? 'l' : 'p', unit:'px', format:[c.width/3, c.height/3] }); pdf.addImage(c.toDataURL('image/png'), 'PNG', 0, 0, c.width/3, c.height/3); const w = pdf.internal.pageSize.getWidth(); const h = pdf.internal.pageSize.getHeight(); pdf.link(0, 0, w, h, { url: cardState.fullUrl }); pdf.save(`Card_${cardState.name}.pdf`); restoreVideoAfterCapture(swap); c.style.transform = pt; }); }, 100); }
 
-    function updateExperienceData(index, field, value) {
-        experiences[index][field] = value;
-        updatePreview();
-    }
-
-    function renderExperienceInputs() {
-        const container = document.getElementById('experience-container');
-        container.innerHTML = "";
-        
-        experiences.forEach((exp, index) => {
-            const div = document.createElement('div');
-            div.className = 'form-group';
-            div.style.background = "#f8f9fa";
-            div.style.padding = "15px";
-            div.style.border = "1px solid #eee";
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <label>Position ${index + 1}</label>
-                    <button class="suggestion-btn" onclick="openSuggestions(${index})"><i class="fas fa-magic"></i> Autofill</button>
-                </div>
-                <input type="text" placeholder="Job Title" value="${exp.title}" oninput="updateExperienceData(${index}, 'title', this.value)" style="margin-bottom:5px">
-                <input type="text" placeholder="Company" value="${exp.company}" oninput="updateExperienceData(${index}, 'company', this.value)" style="margin-bottom:5px">
-                <input type="text" placeholder="Dates" value="${exp.dates}" oninput="updateExperienceData(${index}, 'dates', this.value)" style="margin-bottom:5px">
-                <textarea placeholder="Achievements..." oninput="updateExperienceData(${index}, 'desc', this.value)">${exp.desc}</textarea>
-                <span class="btn-delete" onclick="removeExperience(${index})">Remove Position</span>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function updatePreview() {
-        const name = document.getElementById('inputName').value || "YOUR NAME";
-        document.getElementById('pName').innerText = name;
-        document.getElementById('pInitials').innerText = name.substring(0,2).toUpperCase();
-        
-        document.getElementById('pTitle').innerText = document.getElementById('inputTitle').value || "ROLE";
-        document.getElementById('pPhone').innerText = document.getElementById('inputPhone').value;
-        document.getElementById('pEmail').innerText = document.getElementById('inputEmail').value;
-        document.getElementById('pLocation').innerText = document.getElementById('inputLocation').value;
-        document.getElementById('pSummary').innerText = document.getElementById('inputSummary').value;
-        document.getElementById('pEducation').innerText = document.getElementById('inputEducation').value;
-
-        const skillsRaw = document.getElementById('inputSkills').value;
-        document.getElementById('pSkills').innerHTML = skillsRaw.split('\n').filter(s=>s).map(s => `<div class="p-skill-item">${s}</div>`).join('');
-
-        document.getElementById('pExperienceList').innerHTML = experiences.map(exp => `
-            <div class="p-job-block">
-                <div class="p-job-title">${exp.title}</div>
-                <div class="p-job-company">${exp.company} | ${exp.dates}</div>
-                <div class="p-job-desc">${exp.desc}</div>
-            </div>
-        `).join('');
-
-        saveData();
-    }
-
-    function updateTheme(color) {
-        document.documentElement.style.setProperty('--accent', color);
-    }
-
-    function saveData() {
-        const data = {
-            name: document.getElementById('inputName').value,
-            title: document.getElementById('inputTitle').value,
-            phone: document.getElementById('inputPhone').value,
-            email: document.getElementById('inputEmail').value,
-            location: document.getElementById('inputLocation').value,
-            summary: document.getElementById('inputSummary').value,
-            skills: document.getElementById('inputSkills').value,
-            education: document.getElementById('inputEducation').value,
-            experiences: experiences
-        };
-        localStorage.setItem('resumeData', JSON.stringify(data));
-    }
-
-    function loadData() {
-        const data = JSON.parse(localStorage.getItem('resumeData'));
-        if(!data) return;
-        document.getElementById('inputName').value = data.name || "";
-        document.getElementById('inputTitle').value = data.title || "";
-        document.getElementById('inputPhone').value = data.phone || "";
-        document.getElementById('inputEmail').value = data.email || "";
-        document.getElementById('inputLocation').value = data.location || "";
-        document.getElementById('inputSummary').value = data.summary || "";
-        document.getElementById('inputSkills').value = data.skills || "";
-        document.getElementById('inputEducation').value = data.education || "";
-        if(data.experiences) experiences = data.experiences;
-        renderExperienceInputs();
-    }
-
-    function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const themeColorHex = document.getElementById('themeColor').value;
-        const r = parseInt(themeColorHex.substr(1,2), 16);
-        const g = parseInt(themeColorHex.substr(3,2), 16);
-        const b = parseInt(themeColorHex.substr(5,2), 16);
-        
-        // PDF Gen Logic (Same as before)
-        const sidebarColor = [44, 62, 80];
-        doc.setFillColor(...sidebarColor);
-        doc.rect(0, 0, 70, 297, 'F');
-        
-        let y = 30;
-        doc.setFillColor(255,255,255); doc.circle(35, 30, 15, 'S');
-        doc.setFontSize(16); doc.setTextColor(255,255,255);
-        doc.text((document.getElementById('inputName').value||"XX").substring(0,2).toUpperCase(), 31, 32);
-
-        y = 60;
-        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(r,g,b);
-        doc.text("CONTACT", 10, y); y+=6;
-        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(230,230,230);
-        [document.getElementById('inputPhone').value, document.getElementById('inputEmail').value, document.getElementById('inputLocation').value].forEach(l => { if(l) { doc.text(l, 10, y); y+=6; }});
-        
-        y+=10;
-        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(r,g,b); doc.text("SKILLS", 10, y); y+=6;
-        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(230,230,230);
-        document.getElementById('inputSkills').value.split('\n').forEach(s => { if(s) { doc.text("• "+s, 10, y); y+=5; }});
-
-        y=25; const x=80; const w=115;
-        doc.setFontSize(24); doc.setFont("helvetica", "bold"); doc.setTextColor(44,62,80);
-        doc.text(document.getElementById('inputName').value.toUpperCase(), x, y); y+=7;
-        doc.setFontSize(12); doc.setTextColor(r,g,b);
-        doc.text(document.getElementById('inputTitle').value.toUpperCase(), x, y); y+=5;
-        doc.setDrawColor(200,200,200); doc.line(x,y,200,y); y+=10;
-
-        // Content
-        const sections = [
-            { title: "PROFESSIONAL SUMMARY", text: document.getElementById('inputSummary').value },
-            { title: "WORK HISTORY", items: experiences }
-        ];
-
-        doc.setFontSize(10); doc.setTextColor(60,60,60);
-        const sumLines = doc.splitTextToSize(document.getElementById('inputSummary').value, w);
-        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(44,62,80);
-        doc.text("PROFESSIONAL SUMMARY", x, y); y+=5;
-        doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(60,60,60);
-        doc.text(sumLines, x, y); y += (sumLines.length*5)+5;
-
-        doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(44,62,80);
-        doc.text("WORK HISTORY", x, y); y+=5;
-        
-        experiences.forEach(exp => {
-            if(y>270) { doc.addPage(); doc.setFillColor(...sidebarColor); doc.rect(0,0,70,297,'F'); y=20; }
-            doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(0,0,0);
-            doc.text(exp.title, x, y); y+=5;
-            doc.setFontSize(10); doc.setFont("helvetica", "italic"); doc.setTextColor(100,100,100);
-            doc.text(`${exp.company} | ${exp.dates}`, x, y); y+=5;
-            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(60,60,60);
-            const dLines = doc.splitTextToSize(exp.desc, w);
-            doc.text(dLines, x, y); y+=(dLines.length*5)+6;
-        });
-
-        doc.save("Smart_Resume.pdf");
+    const dropArea = document.getElementById('dropArea'); ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }, false)); dropArea.addEventListener('drop', e => handleFiles(e.dataTransfer.files)); document.addEventListener('paste', e => { if(e.clipboardData.items) [...e.clipboardData.items].forEach(i => { if(i.type.includes('image') || i.type.includes('video')) applyImageFromBlob(i.getAsFile()); }); });
+    function handleFileSelect(i) { handleFiles(i.files); } function handleFiles(f) { if(f[0]) applyImageFromBlob(f[0]); }
+    function applyImageFromBlob(blob) {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            uploadedMediaData = reader.result;
+            const container = document.getElementById('outAvatar');
+            if (blob.type.startsWith('video/')) {
+                container.innerHTML = `<video src="${uploadedMediaData}" class="c-img" autoplay loop muted playsinline></video>`;
+            } else {
+                container.innerHTML = `<img src="${uploadedMediaData}" class="c-img">`;
+            }
+        }
+        reader.readAsDataURL(blob);
     }
 </script>
 </body>
